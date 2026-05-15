@@ -1,8 +1,13 @@
 version: "3"
 
+vars:
+  PORT: '{{default "3000" .PORT}}'
+
 tasks:
-  run:
+  run-local:
     desc: Run the evaluator service locally
+    dotenv:
+      - .env
     cmds:
       - npm run dev
 
@@ -19,6 +24,8 @@ tasks:
 
   test:
     desc: Run the evaluator service test suite
+    dotenv:
+      - .env
     cmds:
       - npm test
 
@@ -26,3 +33,13 @@ tasks:
     desc: Build the evaluator service Docker image
     cmds:
       - docker build --tag denki/evaluator:latest .
+
+  run-docker:
+    desc: Build and run the evaluator Docker container with local env
+    dotenv:
+      - .env
+    deps:
+      - build
+    cmds:
+      - docker run --rm --env-file .env --publish {{.PORT}}:{{.PORT}}
+        denki/evaluator:latest

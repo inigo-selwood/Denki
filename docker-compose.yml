@@ -1,0 +1,7 @@
+services:
+  evaluator:
+    build:
+      context: ./services/evaluator
+    image: denki/evaluator:latest
+    ports:
+      - "3000:3000"

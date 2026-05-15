@@ -1,9 +1,9 @@
-import type { QueuedEvaluation } from "../domain/evaluation.js";
+import type { EvaluationRecord } from "./submit-evaluation.js";
 
 export type EvaluationReader = {
   getQueuedEvaluation(
     evaluationId: string,
-  ): Promise<QueuedEvaluation | undefined>;
+  ): Promise<EvaluationRecord | undefined>;
 };
 
 export type GetEvaluationDependencies = {
@@ -13,6 +13,6 @@ export type GetEvaluationDependencies = {
 export async function getEvaluation(
   evaluationId: string,
   dependencies: GetEvaluationDependencies,
-): Promise<QueuedEvaluation | undefined> {
+): Promise<EvaluationRecord | undefined> {
   return dependencies.reader.getQueuedEvaluation(evaluationId);
 }

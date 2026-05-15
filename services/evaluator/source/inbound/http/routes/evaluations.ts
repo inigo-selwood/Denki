@@ -12,6 +12,7 @@ import {
 import type { OpenAPIHono } from "@hono/zod-openapi";
 import type {
   EvaluationAccepted,
+  EvaluationResult,
   EvaluationRequest,
   QueuedEvaluation,
 } from "../../../domain/evaluation.js";
@@ -22,7 +23,7 @@ export type SubmitEvaluation = (
 
 export type GetEvaluation = (
   evaluationId: string,
-) => Promise<QueuedEvaluation | undefined>;
+) => Promise<QueuedEvaluation | EvaluationResult | undefined>;
 
 export type EvaluationRoutesDependencies = {
   getEvaluation: GetEvaluation;

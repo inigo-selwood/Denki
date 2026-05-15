@@ -31,6 +31,9 @@ function createRepository(events: string[]): EvaluationRepository {
     async getQueuedEvaluation() {
       return undefined;
     },
+    async completeEvaluation() {
+      throw new Error("Unexpected completed evaluation.");
+    },
   };
 }
 
@@ -80,6 +83,9 @@ describe("submitEvaluation", () => {
         },
         async getQueuedEvaluation() {
           return undefined;
+        },
+        async completeEvaluation() {
+          throw new Error("Unexpected completed evaluation.");
         },
       },
       queue: {

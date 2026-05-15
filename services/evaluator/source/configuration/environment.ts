@@ -7,9 +7,14 @@ type OpenAIConfiguration = {
   apiKey: string | undefined;
 };
 
+type DatabaseConfiguration = {
+  url: string | undefined;
+};
+
 type ServiceConfiguration = {
   http: HttpConfiguration;
   openai: OpenAIConfiguration;
+  database: DatabaseConfiguration;
 };
 
 const DEFAULT_HOST = "0.0.0.0";
@@ -19,10 +24,16 @@ export function loadConfiguration(): ServiceConfiguration {
   return {
     http: {
       host: process.env.HOST ?? DEFAULT_HOST,
-      port: parsePort(process.env.PORT),
+      port: parsePort(
+        process.env.EVALUATOR_PORT ?? process.env.PORT,
+        "EVALUATOR_PORT",
+      ),
     },
     openai: {
       apiKey: readOptionalEnvironmentVariable("OPENAI_API_KEY"),
+    },
+    database: {
+      url: readOptionalEnvironmentVariable("DATABASE_URL"),
     },
   };
 }
@@ -37,7 +48,7 @@ function readOptionalEnvironmentVariable(name: string): string | undefined {
   return value;
 }
 
-function parsePort(value: string | undefined): number {
+function parsePort(value: string | undefined, name: string): number {
   if (value === undefined || value.trim() === "") {
     return DEFAULT_PORT;
   }
@@ -45,7 +56,7 @@ function parsePort(value: string | undefined): number {
   const port = Number(value);
 
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
-    throw new Error(`Invalid PORT value: ${value}`);
+    throw new Error(`Invalid ${name} value: ${value}`);
   }
 
   return port;

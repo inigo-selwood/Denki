@@ -31,9 +31,10 @@ served routes and function definitions.
 ## `infrastructure/`
 
 Talks to external systems and temporary technical implementations.
+`infrastructure/database` owns database schema and database client wiring.
 `infrastructure/inngest` sends evaluation events to Inngest.
-`infrastructure/memory` provides local storage while the persistence contract is
-still evolving.
+`infrastructure/memory` provides local storage while the persistence contract
+is still evolving.
 
 ## `runtime/`
 

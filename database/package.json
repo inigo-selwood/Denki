@@ -1,0 +1,8 @@
+{
+  "name": "@denki/database",
+  "version": "0.0.0",
+  "private": true,
+  "devDependencies": {
+    "supabase": "^2.98.2"
+  }
+}

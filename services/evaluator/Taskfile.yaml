@@ -1,38 +1,31 @@
 version: "3"
 
-vars:
-  PORT: '{{default "3000" .PORT}}'
+includes:
+  database:
+    taskfile: ../../database/Taskfile.yaml
+    dir: ../../database
+
+env:
+  EVALUATOR_PORT: "3000"
+  EVALUATOR_URL: "http://127.0.0.1:3000"
+  DATABASE_PORT: "54322"
+  DATABASE_URL: "127.0.0.1"
+  DATABASE_TEST_USER: "postgres"
+  DATABASE_TEST_PASSWORD: "postgres"
 
 tasks:
-  run-local:
-    desc: Run the evaluator service locally
-    dotenv:
-      - .env
-    cmds:
-      - npm run dev
-
-  clean:
-    desc: Remove generated evaluator service artifacts
-    cmds:
-      - rm -rf build
-
   lint:
     desc: Run evaluator service lint checks
     cmds:
       - npm run format:check
       - npm run typecheck
 
-  test:
-    desc: Run the evaluator service test suite
+  run-local:
+    desc: Run the evaluator service locally
     dotenv:
       - .env
     cmds:
-      - npm test
-
-  build:
-    desc: Build the evaluator service Docker image
-    cmds:
-      - docker build --tag denki/evaluator:latest .
+      - npm run dev
 
   run-docker:
     desc: Build and run the evaluator Docker container with local env
@@ -41,5 +34,30 @@ tasks:
     deps:
       - build
     cmds:
-      - docker run --rm --env-file .env --publish {{.PORT}}:{{.PORT}}
-        denki/evaluator:latest
+      - docker run --rm --env-file .env --env PORT=$EVALUATOR_PORT --env
+        EVALUATOR_URL=$EVALUATOR_URL --env DATABASE_URL=$DATABASE_URL --env
+        DATABASE_PORT=$DATABASE_PORT --env
+        DATABASE_TEST_USER=$DATABASE_TEST_USER --env
+        DATABASE_TEST_PASSWORD=$DATABASE_TEST_PASSWORD --publish
+        $EVALUATOR_PORT:$EVALUATOR_PORT denki/evaluator:latest
+
+  build:
+    desc: Build the evaluator service Docker image
+    cmds:
+      - docker build --tag denki/evaluator:latest .
+
+  test:
+    desc: Run the evaluator service test suite with database schema checks
+    dotenv:
+      - .env
+    cmds:
+      - task database:start
+      - defer: { task: database:stop }
+      - task database:reset
+      - npm run db:push
+      - npm test
+
+  clean:
+    desc: Remove generated evaluator service artifacts
+    cmds:
+      - rm -rf build

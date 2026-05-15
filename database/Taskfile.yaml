@@ -1,0 +1,35 @@
+version: "3"
+
+env:
+  DATABASE_PORT: "54322"
+  DATABASE_URL: "127.0.0.1"
+  DATABASE_TEST_USER: "postgres"
+  DATABASE_TEST_PASSWORD: "postgres"
+
+tasks:
+  test:
+    desc: Run an ephemeral blank local Supabase database lifecycle
+    cmds:
+      - task: start
+      - defer: { task: stop }
+      - task: reset
+
+  start:
+    desc: Start the database service local Supabase database
+    cmds:
+      - npm exec supabase -- db start
+
+  reset:
+    desc: Reset the database service local Supabase database
+    cmds:
+      - npm exec supabase -- db reset
+
+  clean:
+    desc: Remove local Supabase containers and data
+    cmds:
+      - task: stop
+
+  stop:
+    desc: Stop the database service local Supabase stack without keeping data
+    cmds:
+      - npm exec supabase -- stop --no-backup

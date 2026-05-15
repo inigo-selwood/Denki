@@ -17,6 +17,8 @@ npm-debug.log*
 .cache/
 .vitest/
 .eslintcache
+**/supabase/.branches/
+**/supabase/.temp/
 
 # Local planning workspace
 .llm/

@@ -1,11 +1,31 @@
 version: "3"
 
+env:
+  EVALUATOR_PORT: "3000"
+  EVALUATOR_URL: "http://127.0.0.1:3000"
+
+  DATABASE_PORT: "54322"
+  DATABASE_URL: "127.0.0.1"
+
+  DATABASE_TEST_USER: "postgres"
+  DATABASE_TEST_PASSWORD: "postgres"
+
 includes:
+  database:
+    taskfile: ./database/Taskfile.yaml
+    dir: ./database
+
   evaluator:
     taskfile: ./services/evaluator/Taskfile.yaml
     dir: ./services/evaluator
 
 tasks:
+  clean:
+    desc: Clean root-managed local artifacts
+    cmds:
+      - task database:clean
+      - task evaluator:clean
+
   lint:
     desc: Run lint checks across services
     cmds:

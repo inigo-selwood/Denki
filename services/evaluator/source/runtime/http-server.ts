@@ -1,5 +1,8 @@
 import { serve } from "@hono/node-server";
-import type { Hono } from "hono";
+
+type FetchApplication = {
+  fetch: (request: Request) => Response | Promise<Response>;
+};
 
 type HttpServerConfiguration = {
   host: string;
@@ -7,7 +10,7 @@ type HttpServerConfiguration = {
 };
 
 export function startHttpServer(
-  application: Hono,
+  application: FetchApplication,
   configuration: HttpServerConfiguration,
 ): void {
   serve(

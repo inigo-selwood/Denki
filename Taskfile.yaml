@@ -7,3 +7,14 @@ includes:
   evaluator:
     taskfile: ./services/evaluator/Taskfile.yaml
     dir: ./services/evaluator
+
+tasks:
+  lint:
+    desc: Run lint checks across services
+    cmds:
+      - task evaluator:lint
+
+  test:
+    desc: Run tests across services
+    cmds:
+      - task evaluator:test

@@ -11,6 +11,12 @@ tasks:
     cmds:
       - rm -rf build
 
+  lint:
+    desc: Run evaluator service lint checks
+    cmds:
+      - npm run format:check
+      - npm run typecheck
+
   test:
     desc: Run the evaluator service test suite
     cmds:

@@ -30,3 +30,5 @@ npm-debug.log*
 # Editors
 .idea/
 .vscode/
+!.vscode/
+!.vscode/settings.json

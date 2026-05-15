@@ -1,0 +1,108 @@
+import { describe, expect, it } from "vitest";
+
+import { submitEvaluation } from "../../source/application/submit-evaluation.js";
+
+import type {
+  EvaluationQueue,
+  EvaluationRepository,
+} from "../../source/application/submit-evaluation.js";
+import type { EvaluationRequest } from "../../source/domain/evaluation.js";
+
+const request: EvaluationRequest = {
+  evidence: [
+    {
+      id: "evidence-1",
+      type: "policy",
+      source: "sharepoint",
+      content: "Access reviews are performed quarterly.",
+    },
+  ],
+  conditions: [
+    {
+      id: "condition-1",
+      statement: "Access reviews are performed quarterly.",
+      criteria: [
+        {
+          id: "criterion-1",
+          statement: "Evidence shows a quarterly access review.",
+          expectations: [],
+        },
+      ],
+    },
+  ],
+};
+
+function createRepository(events: string[]): EvaluationRepository {
+  return {
+    async createQueuedEvaluation(input) {
+      events.push(`persist:${input.evaluationId}`);
+    },
+  };
+}
+
+function createQueue(events: string[]): EvaluationQueue {
+  return {
+    async enqueueEvaluation(input) {
+      events.push(`enqueue:${input.evaluationId}`);
+    },
+  };
+}
+
+describe("submitEvaluation", () => {
+  it("returns a queued evaluation response", async () => {
+    const result = await submitEvaluation(request, {
+      createEvaluationId: () => "evaluation-1",
+      repository: createRepository([]),
+      queue: createQueue([]),
+    });
+
+    expect(result).toEqual({
+      evaluationId: "evaluation-1",
+      status: "queued",
+    });
+  });
+
+  it("persists the evaluation before queueing work", async () => {
+    const events: string[] = [];
+
+    await submitEvaluation(request, {
+      createEvaluationId: () => "evaluation-1",
+      repository: createRepository(events),
+      queue: createQueue(events),
+    });
+
+    expect(events).toEqual(["persist:evaluation-1", "enqueue:evaluation-1"]);
+  });
+
+  it("passes the evaluation request to persistence and queue dependencies", async () => {
+    const persisted: unknown[] = [];
+    const enqueued: unknown[] = [];
+
+    await submitEvaluation(request, {
+      createEvaluationId: () => "evaluation-1",
+      repository: {
+        async createQueuedEvaluation(input) {
+          persisted.push(input);
+        },
+      },
+      queue: {
+        async enqueueEvaluation(input) {
+          enqueued.push(input);
+        },
+      },
+    });
+
+    expect(persisted).toEqual([
+      {
+        evaluationId: "evaluation-1",
+        request,
+      },
+    ]);
+    expect(enqueued).toEqual([
+      {
+        evaluationId: "evaluation-1",
+        request,
+      },
+    ]);
+  });
+});

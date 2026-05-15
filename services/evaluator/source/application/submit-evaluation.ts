@@ -3,7 +3,7 @@ import type {
   EvaluationRequest,
 } from "../domain/evaluation.js";
 
-type EvaluationSubmission = {
+export type EvaluationSubmission = {
   evaluationId: string;
   request: EvaluationRequest;
 };

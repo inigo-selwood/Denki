@@ -8,6 +8,18 @@ import {
 } from "../../../domain/evaluation.js";
 
 import type { OpenAPIHono } from "@hono/zod-openapi";
+import type {
+  EvaluationAccepted,
+  EvaluationRequest,
+} from "../../../domain/evaluation.js";
+
+export type SubmitEvaluation = (
+  request: EvaluationRequest,
+) => Promise<EvaluationAccepted>;
+
+export type EvaluationRoutesDependencies = {
+  submitEvaluation: SubmitEvaluation;
+};
 
 const evaluationUnavailableSchema = z
   .object({
@@ -42,14 +54,6 @@ const createEvaluationRoute = createRoute({
         },
       },
     },
-    501: {
-      description: "Evaluation submission is not implemented yet",
-      content: {
-        "application/json": {
-          schema: evaluationUnavailableSchema,
-        },
-      },
-    },
   },
 });
 
@@ -80,9 +84,14 @@ const getEvaluationRoute = createRoute({
   },
 });
 
-export function registerEvaluationRoutes(application: OpenAPIHono): void {
+export function registerEvaluationRoutes(
+  application: OpenAPIHono,
+  dependencies: EvaluationRoutesDependencies,
+): void {
   application.openapi(createEvaluationRoute, (context) =>
-    context.json(evaluationUnavailableResponse, 501),
+    dependencies
+      .submitEvaluation(context.req.valid("json"))
+      .then((result) => context.json(result, 202)),
   );
 
   application.openapi(getEvaluationRoute, (context) =>

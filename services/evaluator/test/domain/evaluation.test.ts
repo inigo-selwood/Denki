@@ -11,27 +11,21 @@ describe("evaluation domain schemas", () => {
     const request = evaluationRequestSchema.parse({
       evidence: [
         {
-          id: "evidence-1",
-          type: "policy",
-          source: "sharepoint",
+          name: "Quarterly access review policy.pdf",
           content: "Access reviews are performed quarterly.",
         },
       ],
       conditions: [
         {
-          id: "condition-1",
           statement: "Access reviews are performed quarterly.",
-          criteria: [
-            {
-              id: "criterion-1",
-              statement: "The evidence shows a quarterly access review.",
-            },
-          ],
+          criteria: ["The evidence shows a quarterly access review."],
         },
       ],
     });
 
-    expect(request.conditions[0]?.criteria[0]?.expectations).toEqual([]);
+    expect(request.conditions[0]?.criteria[0]).toBe(
+      "The evidence shows a quarterly access review.",
+    );
   });
 
   it("rejects evaluation requests without evidence", () => {
@@ -39,14 +33,8 @@ describe("evaluation domain schemas", () => {
       evidence: [],
       conditions: [
         {
-          id: "condition-1",
           statement: "Access reviews are performed quarterly.",
-          criteria: [
-            {
-              id: "criterion-1",
-              statement: "The evidence shows a quarterly access review.",
-            },
-          ],
+          criteria: ["The evidence shows a quarterly access review."],
         },
       ],
     });

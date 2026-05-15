@@ -11,23 +11,14 @@ import type { EvaluationRequest } from "../../source/domain/evaluation.js";
 const request: EvaluationRequest = {
   evidence: [
     {
-      id: "evidence-1",
-      type: "policy",
-      source: "sharepoint",
+      name: "Quarterly access review policy.pdf",
       content: "Access reviews are performed quarterly.",
     },
   ],
   conditions: [
     {
-      id: "condition-1",
       statement: "Access reviews are performed quarterly.",
-      criteria: [
-        {
-          id: "criterion-1",
-          statement: "Evidence shows a quarterly access review.",
-          expectations: [],
-        },
-      ],
+      criteria: ["Evidence shows a quarterly access review."],
     },
   ],
 };

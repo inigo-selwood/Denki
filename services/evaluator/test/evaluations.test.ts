@@ -2,9 +2,16 @@ import { describe, expect, it } from "vitest";
 
 import { createHttpApplication } from "../source/inbound/http/application.js";
 
-describe("evaluation endpoint stubs", () => {
-  it("exposes the evaluation submission stub", async () => {
-    const application = createHttpApplication();
+describe("evaluation endpoints", () => {
+  it("submits an evaluation", async () => {
+    const application = createHttpApplication({
+      async submitEvaluation() {
+        return {
+          evaluationId: "evaluation-1",
+          status: "queued",
+        };
+      },
+    });
 
     const response = await application.request("/evaluations", {
       method: "POST",
@@ -14,31 +21,24 @@ describe("evaluation endpoint stubs", () => {
       body: JSON.stringify({
         evidence: [
           {
-            id: "evidence-1",
-            type: "policy",
-            source: "sharepoint",
+            name: "Quarterly access review policy.pdf",
             content: "Access reviews are performed quarterly.",
           },
         ],
         conditions: [
           {
-            id: "condition-1",
             statement: "Access reviews are performed quarterly.",
-            criteria: [
-              {
-                id: "criterion-1",
-                statement: "Evidence shows a quarterly access review.",
-              },
-            ],
+            criteria: ["Evidence shows a quarterly access review."],
           },
         ],
       }),
     });
 
     await expect(response.json()).resolves.toEqual({
-      error: "not_implemented",
+      evaluationId: "evaluation-1",
+      status: "queued",
     });
-    expect(response.status).toBe(501);
+    expect(response.status).toBe(202);
   });
 
   it("exposes the evaluation lookup stub", async () => {

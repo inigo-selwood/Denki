@@ -2,9 +2,11 @@ import { z } from "@hono/zod-openapi";
 
 export const evidenceSchema = z
   .object({
-    id: z.string().min(1),
-    type: z.string().min(1),
-    source: z.string().min(1),
+    name: z.string().min(1).openapi({
+      description:
+        "Human-readable evidence name, such as a filename, email subject, report title, or export name.",
+      example: "Quarterly access review policy.pdf",
+    }),
     content: z.union([
       z.string().min(1),
       z.record(z.string(), z.unknown()),
@@ -14,19 +16,10 @@ export const evidenceSchema = z
   })
   .openapi("Evidence");
 
-export const criterionSchema = z
-  .object({
-    id: z.string().min(1),
-    statement: z.string().min(1),
-    expectations: z.array(z.string().min(1)).default([]),
-  })
-  .openapi("Criterion");
-
 export const conditionSchema = z
   .object({
-    id: z.string().min(1),
     statement: z.string().min(1),
-    criteria: z.array(criterionSchema).min(1),
+    criteria: z.array(z.string().min(1)).min(1),
   })
   .openapi("Condition");
 
@@ -107,7 +100,6 @@ export const evaluationIdParamsSchema = z.object({
 });
 
 export type Evidence = z.infer<typeof evidenceSchema>;
-export type Criterion = z.infer<typeof criterionSchema>;
 export type Condition = z.infer<typeof conditionSchema>;
 export type EvaluationRequest = z.infer<typeof evaluationRequestSchema>;
 export type CriterionVerdict = z.infer<typeof criterionVerdictSchema>;

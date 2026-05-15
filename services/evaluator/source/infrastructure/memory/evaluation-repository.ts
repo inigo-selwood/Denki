@@ -10,5 +10,18 @@ export function createMemoryEvaluationRepository(): EvaluationRepository {
     async createQueuedEvaluation(input) {
       evaluations.set(input.evaluationId, input);
     },
+    async getQueuedEvaluation(evaluationId) {
+      const evaluation = evaluations.get(evaluationId);
+
+      if (evaluation === undefined) {
+        return undefined;
+      }
+
+      return {
+        evaluationId: evaluation.evaluationId,
+        status: "queued",
+        request: evaluation.request,
+      };
+    },
   };
 }

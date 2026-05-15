@@ -10,6 +10,9 @@ import type { EvaluationRoutesDependencies } from "./routes/evaluations.js";
 export type HttpApplicationDependencies = EvaluationRoutesDependencies;
 
 const defaultDependencies: HttpApplicationDependencies = {
+  async getEvaluation() {
+    return undefined;
+  },
   async submitEvaluation() {
     throw new Error("Evaluation submission is not configured.");
   },

@@ -28,6 +28,9 @@ function createRepository(events: string[]): EvaluationRepository {
     async createQueuedEvaluation(input) {
       events.push(`persist:${input.evaluationId}`);
     },
+    async getQueuedEvaluation() {
+      return undefined;
+    },
   };
 }
 
@@ -74,6 +77,9 @@ describe("submitEvaluation", () => {
       repository: {
         async createQueuedEvaluation(input) {
           persisted.push(input);
+        },
+        async getQueuedEvaluation() {
+          return undefined;
         },
       },
       queue: {

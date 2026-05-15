@@ -3,33 +3,31 @@ import { createRoute, z } from "@hono/zod-openapi";
 import {
   evaluationAcceptedSchema,
   evaluationIdParamsSchema,
+  evaluationNotFoundSchema,
   evaluationRequestSchema,
   evaluationResultSchema,
+  queuedEvaluationSchema,
 } from "../../../domain/evaluation.js";
 
 import type { OpenAPIHono } from "@hono/zod-openapi";
 import type {
   EvaluationAccepted,
   EvaluationRequest,
+  QueuedEvaluation,
 } from "../../../domain/evaluation.js";
 
 export type SubmitEvaluation = (
   request: EvaluationRequest,
 ) => Promise<EvaluationAccepted>;
 
+export type GetEvaluation = (
+  evaluationId: string,
+) => Promise<QueuedEvaluation | undefined>;
+
 export type EvaluationRoutesDependencies = {
+  getEvaluation: GetEvaluation;
   submitEvaluation: SubmitEvaluation;
 };
-
-const evaluationUnavailableSchema = z
-  .object({
-    error: z.literal("not_implemented"),
-  })
-  .openapi("EvaluationUnavailable");
-
-const evaluationUnavailableResponse = {
-  error: "not_implemented",
-} as const;
 
 const createEvaluationRoute = createRoute({
   method: "post",
@@ -69,15 +67,15 @@ const getEvaluationRoute = createRoute({
       description: "Evaluation job status and result",
       content: {
         "application/json": {
-          schema: evaluationResultSchema,
+          schema: z.union([queuedEvaluationSchema, evaluationResultSchema]),
         },
       },
     },
-    501: {
-      description: "Evaluation lookup is not implemented yet",
+    404: {
+      description: "Evaluation was not found",
       content: {
         "application/json": {
-          schema: evaluationUnavailableSchema,
+          schema: evaluationNotFoundSchema,
         },
       },
     },
@@ -95,6 +93,12 @@ export function registerEvaluationRoutes(
   );
 
   application.openapi(getEvaluationRoute, (context) =>
-    context.json(evaluationUnavailableResponse, 501),
+    dependencies
+      .getEvaluation(context.req.valid("param").id)
+      .then((result) =>
+        result === undefined
+          ? context.json({ error: "not_found" } as const, 404)
+          : context.json(result, 200),
+      ),
   );
 }

@@ -87,6 +87,20 @@ export const evaluationAcceptedSchema = z
   })
   .openapi("EvaluationAccepted");
 
+export const queuedEvaluationSchema = z
+  .object({
+    evaluationId: z.string().min(1),
+    status: z.literal("queued"),
+    request: evaluationRequestSchema,
+  })
+  .openapi("QueuedEvaluation");
+
+export const evaluationNotFoundSchema = z
+  .object({
+    error: z.literal("not_found"),
+  })
+  .openapi("EvaluationNotFound");
+
 export const evaluationIdParamsSchema = z.object({
   id: z
     .string()
@@ -110,3 +124,4 @@ export type ConditionResult = z.infer<typeof conditionResultSchema>;
 export type EvaluationStatus = z.infer<typeof evaluationStatusSchema>;
 export type EvaluationResult = z.infer<typeof evaluationResultSchema>;
 export type EvaluationAccepted = z.infer<typeof evaluationAcceptedSchema>;
+export type QueuedEvaluation = z.infer<typeof queuedEvaluationSchema>;

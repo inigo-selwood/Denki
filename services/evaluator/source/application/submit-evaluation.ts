@@ -1,6 +1,7 @@
 import type {
   EvaluationAccepted,
   EvaluationRequest,
+  QueuedEvaluation,
 } from "../domain/evaluation.js";
 
 export type EvaluationSubmission = {
@@ -10,6 +11,9 @@ export type EvaluationSubmission = {
 
 export type EvaluationRepository = {
   createQueuedEvaluation(input: EvaluationSubmission): Promise<void>;
+  getQueuedEvaluation(
+    evaluationId: string,
+  ): Promise<QueuedEvaluation | undefined>;
 };
 
 export type EvaluationQueue = {

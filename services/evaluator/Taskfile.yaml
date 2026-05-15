@@ -1,0 +1,25 @@
+version: "3"
+
+dotenv:
+  - ../../.env
+
+tasks:
+  run:
+    desc: Run the evaluator service locally
+    cmds:
+      - npm run dev
+
+  clean:
+    desc: Remove generated evaluator service artifacts
+    cmds:
+      - rm -rf build
+
+  test:
+    desc: Run the evaluator service test suite
+    cmds:
+      - npm test
+
+  build:
+    desc: Build the evaluator service Docker image
+    cmds:
+      - docker build --tag denki/evaluator:latest .

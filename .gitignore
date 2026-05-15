@@ -1,0 +1,32 @@
+.DS_Store
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Build outputs
+build/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test and tool caches
+.cache/
+.vitest/
+.eslintcache
+
+# Local planning workspace
+.llm/
+**/.llm/
+
+# Editors
+.idea/
+.vscode/

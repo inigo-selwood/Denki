@@ -7,35 +7,83 @@ type OpenAIConfiguration = {
   apiKey: string | undefined;
 };
 
-type DatabaseConfiguration = {
-  url: string | undefined;
+type InngestConfiguration = {
+  eventKey: string | undefined;
+  signingKey: string | undefined;
 };
 
+type DatabaseConfiguration = {
+  connectionUrl: string | undefined;
+};
+
+type Environment = "development" | "local" | "production";
+type QueueMode = "immediate" | "inngest";
+
 type ServiceConfiguration = {
+  environment: Environment;
   http: HttpConfiguration;
   openai: OpenAIConfiguration;
+  inngest: InngestConfiguration;
   database: DatabaseConfiguration;
+  queue: {
+    mode: QueueMode;
+  };
 };
 
 const DEFAULT_HOST = "0.0.0.0";
 const DEFAULT_PORT = 3000;
 
 export function loadConfiguration(): ServiceConfiguration {
+  const environment = parseEnvironment(process.env.ENVIRONMENT);
+
   return {
+    environment,
     http: {
-      host: process.env.HOST ?? DEFAULT_HOST,
-      port: parsePort(
-        process.env.EVALUATOR_PORT ?? process.env.PORT,
-        "EVALUATOR_PORT",
-      ),
+      host: DEFAULT_HOST,
+      port: parsePort(process.env.EVALUATOR_PORT, "EVALUATOR_PORT"),
     },
     openai: {
       apiKey: readOptionalEnvironmentVariable("OPENAI_API_KEY"),
     },
+    inngest: {
+      eventKey: readOptionalEnvironmentVariable("INNGEST_EVENT_KEY"),
+      signingKey: readOptionalEnvironmentVariable("INNGEST_SIGNING_KEY"),
+    },
     database: {
-      url: readOptionalEnvironmentVariable("DATABASE_URL"),
+      connectionUrl: createDatabaseConnectionUrl(environment),
+    },
+    queue: {
+      mode: createQueueMode(environment),
     },
   };
+}
+
+function createDatabaseConnectionUrl(
+  environment: Environment,
+): string | undefined {
+  const host = getDefaultDatabaseHost(environment);
+
+  if (host === undefined) {
+    return undefined;
+  }
+
+  const port = process.env.DATABASE_PORT ?? "54322";
+  const user = process.env.DATABASE_USER ?? "postgres";
+  const password = process.env.DATABASE_PASSWORD ?? "postgres";
+
+  return `postgres://${user}:${password}@${host}:${port}/postgres`;
+}
+
+function getDefaultDatabaseHost(environment: Environment): string | undefined {
+  if (environment === "development") {
+    return "127.0.0.1";
+  }
+
+  if (environment === "local") {
+    return "host.docker.internal";
+  }
+
+  return undefined;
 }
 
 function readOptionalEnvironmentVariable(name: string): string | undefined {
@@ -60,4 +108,24 @@ function parsePort(value: string | undefined, name: string): number {
   }
 
   return port;
+}
+
+function parseEnvironment(value: string | undefined): Environment {
+  if (value === undefined || value.trim() === "") {
+    return "production";
+  }
+
+  if (value === "development" || value === "local" || value === "production") {
+    return value;
+  }
+
+  throw new Error(`Invalid ENVIRONMENT value: ${value}`);
+}
+
+function createQueueMode(environment: Environment): QueueMode {
+  if (environment === "development" || environment === "local") {
+    return "immediate";
+  }
+
+  return "inngest";
 }

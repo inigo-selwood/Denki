@@ -1,14 +1,13 @@
 version: "3"
 
 env:
+  ENVIRONMENT: "development"
+
   EVALUATOR_PORT: "3000"
-  EVALUATOR_URL: "http://127.0.0.1:3000"
 
   DATABASE_PORT: "54322"
-  DATABASE_URL: "127.0.0.1"
-
-  DATABASE_TEST_USER: "postgres"
-  DATABASE_TEST_PASSWORD: "postgres"
+  DATABASE_USER: "postgres"
+  DATABASE_PASSWORD: "postgres"
 
 includes:
   database:

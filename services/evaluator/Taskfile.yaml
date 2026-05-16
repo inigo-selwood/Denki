@@ -5,14 +5,6 @@ includes:
     taskfile: ../../database/Taskfile.yaml
     dir: ../../database
 
-env:
-  EVALUATOR_PORT: "3000"
-  EVALUATOR_URL: "http://127.0.0.1:3000"
-  DATABASE_PORT: "54322"
-  DATABASE_URL: "127.0.0.1"
-  DATABASE_TEST_USER: "postgres"
-  DATABASE_TEST_PASSWORD: "postgres"
-
 tasks:
   lint:
     desc: Run evaluator service lint checks
@@ -34,12 +26,10 @@ tasks:
     deps:
       - build
     cmds:
-      - docker run --rm --env-file .env --env PORT=$EVALUATOR_PORT --env
-        EVALUATOR_URL=$EVALUATOR_URL --env DATABASE_URL=$DATABASE_URL --env
-        DATABASE_PORT=$DATABASE_PORT --env
-        DATABASE_TEST_USER=$DATABASE_TEST_USER --env
-        DATABASE_TEST_PASSWORD=$DATABASE_TEST_PASSWORD --publish
-        $EVALUATOR_PORT:$EVALUATOR_PORT denki/evaluator:latest
+      - docker run --rm --env-file .env --env ENVIRONMENT=local --env
+        EVALUATOR_PORT=$EVALUATOR_PORT --env DATABASE_PORT=$DATABASE_PORT --env
+        DATABASE_USER=$DATABASE_USER --env DATABASE_PASSWORD=$DATABASE_PASSWORD
+        --publish $EVALUATOR_PORT:$EVALUATOR_PORT denki/evaluator:latest
 
   build:
     desc: Build the evaluator service Docker image

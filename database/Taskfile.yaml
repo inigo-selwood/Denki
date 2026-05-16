@@ -1,11 +1,5 @@
 version: "3"
 
-env:
-  DATABASE_PORT: "54322"
-  DATABASE_URL: "127.0.0.1"
-  DATABASE_TEST_USER: "postgres"
-  DATABASE_TEST_PASSWORD: "postgres"
-
 tasks:
   test:
     desc: Run an ephemeral blank local Supabase database lifecycle

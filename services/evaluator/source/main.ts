@@ -5,7 +5,7 @@ import { startHttpServer } from "./runtime/http-server.js";
 
 const configuration = loadConfiguration();
 const application = createHttpApplication(
-  createRuntimeEvaluationDependencies(),
+  createRuntimeEvaluationDependencies(configuration),
 );
 
 startHttpServer(application, configuration.http);

@@ -101,6 +101,23 @@ describeDatabase("createDatabaseEvaluationRepository", () => {
       repository?.getQueuedEvaluation(evaluationId),
     ).resolves.toEqual(result);
   });
+
+  it("persists running evaluations", async () => {
+    await repository?.createQueuedEvaluation({
+      evaluationId,
+      request,
+    });
+
+    await repository?.markEvaluationRunning(evaluationId);
+
+    await expect(
+      repository?.getQueuedEvaluation(evaluationId),
+    ).resolves.toEqual({
+      evaluationId,
+      status: "running",
+      request,
+    });
+  });
 });
 
 async function deleteEvaluation() {

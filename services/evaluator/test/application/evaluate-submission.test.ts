@@ -7,6 +7,7 @@ import type { EvaluationResult } from "../../source/domain/evaluation.js";
 describe("evaluateSubmission", () => {
   it("creates and persists placeholder results for every criterion", async () => {
     const persisted: EvaluationResult[] = [];
+    const lifecycleEvents: string[] = [];
 
     const result = await evaluateSubmission(
       {
@@ -31,7 +32,11 @@ describe("evaluateSubmission", () => {
       },
       {
         repository: {
+          async markEvaluationRunning(evaluationId) {
+            lifecycleEvents.push(`running:${evaluationId}`);
+          },
           async completeEvaluation(input) {
+            lifecycleEvents.push(`completed:${input.evaluationId}`);
             persisted.push(input);
           },
         },
@@ -77,5 +82,9 @@ describe("evaluateSubmission", () => {
       ],
     });
     expect(persisted).toEqual([result]);
+    expect(lifecycleEvents).toEqual([
+      "running:evaluation-1",
+      "completed:evaluation-1",
+    ]);
   });
 });

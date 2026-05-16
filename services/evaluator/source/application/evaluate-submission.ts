@@ -10,6 +10,7 @@ import type {
 } from "../domain/evaluation.js";
 
 export type EvaluationResultRepository = {
+  markEvaluationRunning(evaluationId: string): Promise<void>;
   completeEvaluation(result: EvaluationResult): Promise<void>;
 };
 
@@ -21,6 +22,8 @@ export async function evaluateSubmission(
   submission: EvaluationSubmission,
   dependencies: EvaluateSubmissionDependencies,
 ): Promise<EvaluationResult> {
+  await dependencies.repository.markEvaluationRunning(submission.evaluationId);
+
   const result = createPlaceholderEvaluationResult(submission);
 
   await dependencies.repository.completeEvaluation(result);

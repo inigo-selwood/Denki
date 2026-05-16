@@ -17,6 +17,7 @@ export type EvaluationRepository = {
   getQueuedEvaluation(
     evaluationId: string,
   ): Promise<EvaluationRecord | undefined>;
+  markEvaluationRunning(evaluationId: string): Promise<void>;
   completeEvaluation(result: EvaluationResult): Promise<void>;
 };
 

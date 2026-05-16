@@ -42,6 +42,38 @@ describe("memory evaluation repository", () => {
     ).resolves.toBeUndefined();
   });
 
+  it("stores and returns running evaluations", async () => {
+    const repository = createMemoryEvaluationRepository();
+    const request = {
+      evidence: [
+        {
+          name: "Quarterly access review policy.pdf",
+          content: "Access reviews are performed quarterly.",
+        },
+      ],
+      conditions: [
+        {
+          statement: "Access reviews are performed quarterly.",
+          criteria: ["Evidence shows a quarterly access review."],
+        },
+      ],
+    };
+
+    await repository.createQueuedEvaluation({
+      evaluationId: "evaluation-1",
+      request,
+    });
+    await repository.markEvaluationRunning("evaluation-1");
+
+    await expect(
+      repository.getQueuedEvaluation("evaluation-1"),
+    ).resolves.toEqual({
+      evaluationId: "evaluation-1",
+      status: "running",
+      request,
+    });
+  });
+
   it("stores and returns completed evaluations", async () => {
     const repository = createMemoryEvaluationRepository();
     const result = {

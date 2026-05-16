@@ -90,7 +90,7 @@ export const evaluationAcceptedSchema = z
 export const queuedEvaluationSchema = z
   .object({
     evaluationId: z.string().min(1),
-    status: z.literal("queued"),
+    status: z.enum(["queued", "running"]),
     request: evaluationRequestSchema,
   })
   .openapi("QueuedEvaluation");

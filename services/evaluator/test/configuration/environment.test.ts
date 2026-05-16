@@ -10,6 +10,7 @@ describe("loadConfiguration", () => {
   });
 
   it("uses the default HTTP host and evaluator port", () => {
+    process.env.ENVIRONMENT = "development";
     process.env.EVALUATOR_PORT = "4000";
 
     expect(loadConfiguration().http).toEqual({
@@ -18,11 +19,12 @@ describe("loadConfiguration", () => {
     });
   });
 
-  it("defaults to production environment with inngest queue mode", () => {
+  it("requires production-only configuration by default", () => {
     delete process.env.ENVIRONMENT;
 
-    expect(loadConfiguration().environment).toBe("production");
-    expect(loadConfiguration().queue.mode).toBe("inngest");
+    expect(() => loadConfiguration()).toThrow(
+      "Missing production configuration: production database connection routing, INNGEST_EVENT_KEY, INNGEST_SIGNING_KEY",
+    );
   });
 
   it("uses immediate queue mode in development environment", () => {
@@ -38,6 +40,7 @@ describe("loadConfiguration", () => {
   });
 
   it("reads Inngest credentials from the environment", () => {
+    process.env.ENVIRONMENT = "development";
     process.env.INNGEST_EVENT_KEY = "event-key";
     process.env.INNGEST_SIGNING_KEY = "signing-key";
 
@@ -71,6 +74,14 @@ describe("loadConfiguration", () => {
 
     expect(loadConfiguration().database.connectionUrl).toBe(
       "postgres://user:password@127.0.0.1:5433/postgres",
+    );
+  });
+
+  it("requires Inngest credentials in production", () => {
+    process.env.ENVIRONMENT = "production";
+
+    expect(() => loadConfiguration()).toThrow(
+      "Missing production configuration: production database connection routing, INNGEST_EVENT_KEY, INNGEST_SIGNING_KEY",
     );
   });
 

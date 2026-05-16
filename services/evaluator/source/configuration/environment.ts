@@ -35,8 +35,7 @@ const DEFAULT_PORT = 3000;
 
 export function loadConfiguration(): ServiceConfiguration {
   const environment = parseEnvironment(process.env.ENVIRONMENT);
-
-  return {
+  const configuration = {
     environment,
     http: {
       host: DEFAULT_HOST,
@@ -56,6 +55,10 @@ export function loadConfiguration(): ServiceConfiguration {
       mode: createQueueMode(environment),
     },
   };
+
+  validateConfiguration(configuration);
+
+  return configuration;
 }
 
 function createDatabaseConnectionUrl(
@@ -128,4 +131,28 @@ function createQueueMode(environment: Environment): QueueMode {
   }
 
   return "inngest";
+}
+
+function validateConfiguration(configuration: ServiceConfiguration): void {
+  if (configuration.environment !== "production") {
+    return;
+  }
+
+  const missing: string[] = [];
+
+  if (configuration.database.connectionUrl === undefined) {
+    missing.push("production database connection routing");
+  }
+
+  if (configuration.inngest.eventKey === undefined) {
+    missing.push("INNGEST_EVENT_KEY");
+  }
+
+  if (configuration.inngest.signingKey === undefined) {
+    missing.push("INNGEST_SIGNING_KEY");
+  }
+
+  if (missing.length > 0) {
+    throw new Error(`Missing production configuration: ${missing.join(", ")}`);
+  }
 }

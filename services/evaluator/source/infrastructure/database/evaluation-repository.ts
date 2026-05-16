@@ -39,6 +39,14 @@ export function createDatabaseEvaluationRepository(
 
       return parseEvaluationRecord(row);
     },
+    async markEvaluationRunning(evaluationId) {
+      await database
+        .update(evaluations)
+        .set({
+          status: "running",
+        })
+        .where(eq(evaluations.id, evaluationId));
+    },
     async completeEvaluation(result: EvaluationResult) {
       await database
         .update(evaluations)

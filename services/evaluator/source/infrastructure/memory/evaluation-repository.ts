@@ -31,6 +31,13 @@ export function createMemoryEvaluationRepository(): EvaluationRepository {
         status: "running",
       });
     },
+    async markEvaluationFailed(evaluationId, error) {
+      evaluations.set(evaluationId, {
+        evaluationId,
+        status: "failed",
+        error,
+      });
+    },
     async completeEvaluation(result: EvaluationResult) {
       evaluations.set(result.evaluationId, result);
     },

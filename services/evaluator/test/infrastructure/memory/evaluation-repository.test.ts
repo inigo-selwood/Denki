@@ -108,4 +108,22 @@ describe("memory evaluation repository", () => {
       repository.getQueuedEvaluation("evaluation-1"),
     ).resolves.toEqual(result);
   });
+
+  it("stores and returns failed evaluations", async () => {
+    const repository = createMemoryEvaluationRepository();
+
+    await repository.markEvaluationFailed("evaluation-1", {
+      message: "Could not evaluate evidence.",
+    });
+
+    await expect(
+      repository.getQueuedEvaluation("evaluation-1"),
+    ).resolves.toEqual({
+      evaluationId: "evaluation-1",
+      status: "failed",
+      error: {
+        message: "Could not evaluate evidence.",
+      },
+    });
+  });
 });

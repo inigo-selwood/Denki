@@ -6,11 +6,16 @@ import {
 import type { EvaluationSubmission } from "./submit-evaluation.js";
 import type {
   CriterionResult,
+  FailedEvaluation,
   EvaluationResult,
 } from "../domain/evaluation.js";
 
 export type EvaluationResultRepository = {
   markEvaluationRunning(evaluationId: string): Promise<void>;
+  markEvaluationFailed(
+    evaluationId: string,
+    error: FailedEvaluation["error"],
+  ): Promise<void>;
   completeEvaluation(result: EvaluationResult): Promise<void>;
 };
 
@@ -24,11 +29,22 @@ export async function evaluateSubmission(
 ): Promise<EvaluationResult> {
   await dependencies.repository.markEvaluationRunning(submission.evaluationId);
 
-  const result = createPlaceholderEvaluationResult(submission);
+  try {
+    const result = createPlaceholderEvaluationResult(submission);
 
-  await dependencies.repository.completeEvaluation(result);
+    await dependencies.repository.completeEvaluation(result);
 
-  return result;
+    return result;
+  } catch (error) {
+    await dependencies.repository.markEvaluationFailed(
+      submission.evaluationId,
+      {
+        message: getErrorMessage(error),
+      },
+    );
+
+    throw error;
+  }
 }
 
 function createPlaceholderEvaluationResult(
@@ -74,4 +90,12 @@ function createPlaceholderCriterionResult(input: {
       (_, evidenceIndex) => `evidence:${evidenceIndex}`,
     ),
   };
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message.trim() !== "") {
+    return error.message;
+  }
+
+  return "Evaluation failed.";
 }

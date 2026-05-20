@@ -118,6 +118,27 @@ describeDatabase("createDatabaseEvaluationRepository", () => {
       request,
     });
   });
+
+  it("persists failed evaluations", async () => {
+    await repository?.createQueuedEvaluation({
+      evaluationId,
+      request,
+    });
+
+    await repository?.markEvaluationFailed(evaluationId, {
+      message: "Could not evaluate evidence.",
+    });
+
+    await expect(
+      repository?.getQueuedEvaluation(evaluationId),
+    ).resolves.toEqual({
+      evaluationId,
+      status: "failed",
+      error: {
+        message: "Could not evaluate evidence.",
+      },
+    });
+  });
 });
 
 async function deleteEvaluation() {

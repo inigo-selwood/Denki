@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 
 import {
   evaluationResultSchema,
+  failedEvaluationSchema,
   queuedEvaluationSchema,
 } from "../../domain/evaluation.js";
 import { evaluations } from "./schema.js";
@@ -47,6 +48,15 @@ export function createDatabaseEvaluationRepository(
         })
         .where(eq(evaluations.id, evaluationId));
     },
+    async markEvaluationFailed(evaluationId, error) {
+      await database
+        .update(evaluations)
+        .set({
+          error,
+          status: "failed",
+        })
+        .where(eq(evaluations.id, evaluationId));
+    },
     async completeEvaluation(result: EvaluationResult) {
       await database
         .update(evaluations)
@@ -62,6 +72,14 @@ export function createDatabaseEvaluationRepository(
 function parseEvaluationRecord(row: typeof evaluations.$inferSelect) {
   if (row.result !== null) {
     return evaluationResultSchema.parse(row.result);
+  }
+
+  if (row.status === "failed" && row.error !== null) {
+    return failedEvaluationSchema.parse({
+      evaluationId: row.id,
+      status: row.status,
+      error: row.error,
+    });
   }
 
   return queuedEvaluationSchema.parse({

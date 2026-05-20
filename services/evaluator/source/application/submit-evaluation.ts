@@ -1,11 +1,15 @@
 import type {
   EvaluationAccepted,
+  FailedEvaluation,
   EvaluationResult,
   EvaluationRequest,
   QueuedEvaluation,
 } from "../domain/evaluation.js";
 
-export type EvaluationRecord = QueuedEvaluation | EvaluationResult;
+export type EvaluationRecord =
+  | FailedEvaluation
+  | QueuedEvaluation
+  | EvaluationResult;
 
 export type EvaluationSubmission = {
   evaluationId: string;
@@ -18,6 +22,10 @@ export type EvaluationRepository = {
     evaluationId: string,
   ): Promise<EvaluationRecord | undefined>;
   markEvaluationRunning(evaluationId: string): Promise<void>;
+  markEvaluationFailed(
+    evaluationId: string,
+    error: FailedEvaluation["error"],
+  ): Promise<void>;
   completeEvaluation(result: EvaluationResult): Promise<void>;
 };
 

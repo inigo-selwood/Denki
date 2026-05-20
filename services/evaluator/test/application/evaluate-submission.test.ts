@@ -35,6 +35,9 @@ describe("evaluateSubmission", () => {
           async markEvaluationRunning(evaluationId) {
             lifecycleEvents.push(`running:${evaluationId}`);
           },
+          async markEvaluationFailed(evaluationId, error) {
+            lifecycleEvents.push(`failed:${evaluationId}:${error.message}`);
+          },
           async completeEvaluation(input) {
             lifecycleEvents.push(`completed:${input.evaluationId}`);
             persisted.push(input);
@@ -85,6 +88,53 @@ describe("evaluateSubmission", () => {
     expect(lifecycleEvents).toEqual([
       "running:evaluation-1",
       "completed:evaluation-1",
+    ]);
+  });
+
+  it("marks the evaluation failed before propagating errors", async () => {
+    const lifecycleEvents: string[] = [];
+    const error = new Error("Could not persist result.");
+
+    await expect(
+      evaluateSubmission(
+        {
+          evaluationId: "evaluation-1",
+          request: {
+            evidence: [
+              {
+                name: "Quarterly access review policy.pdf",
+                content: "Access reviews are performed quarterly.",
+              },
+            ],
+            conditions: [
+              {
+                statement: "Access reviews are performed quarterly.",
+                criteria: ["Evidence shows a quarterly access review."],
+              },
+            ],
+          },
+        },
+        {
+          repository: {
+            async markEvaluationRunning(evaluationId) {
+              lifecycleEvents.push(`running:${evaluationId}`);
+            },
+            async markEvaluationFailed(evaluationId, failure) {
+              lifecycleEvents.push(
+                `failed:${evaluationId}:${failure.message}`,
+              );
+            },
+            async completeEvaluation() {
+              throw error;
+            },
+          },
+        },
+      ),
+    ).rejects.toThrow(error);
+
+    expect(lifecycleEvents).toEqual([
+      "running:evaluation-1",
+      "failed:evaluation-1:Could not persist result.",
     ]);
   });
 });

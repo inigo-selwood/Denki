@@ -4,6 +4,7 @@ import { createHttpApplication } from "../source/inbound/http/application.js";
 
 import type {
   EvaluationResult,
+  FailedEvaluation,
   QueuedEvaluation,
 } from "../source/domain/evaluation.js";
 
@@ -51,6 +52,14 @@ describe("evaluation endpoints", () => {
         ],
       },
     ],
+  };
+
+  const failedEvaluation: FailedEvaluation = {
+    evaluationId: "evaluation-1",
+    status: "failed",
+    error: {
+      message: "Could not evaluate evidence.",
+    },
   };
 
   it("submits an evaluation", async () => {
@@ -129,6 +138,25 @@ describe("evaluation endpoints", () => {
     const response = await application.request("/evaluations/evaluation-1");
 
     await expect(response.json()).resolves.toEqual(completedEvaluation);
+    expect(response.status).toBe(200);
+  });
+
+  it("returns failed evaluation results", async () => {
+    const application = createHttpApplication({
+      async getEvaluation() {
+        return failedEvaluation;
+      },
+      async submitEvaluation() {
+        return {
+          evaluationId: "evaluation-1",
+          status: "queued",
+        };
+      },
+    });
+
+    const response = await application.request("/evaluations/evaluation-1");
+
+    await expect(response.json()).resolves.toEqual(failedEvaluation);
     expect(response.status).toBe(200);
   });
 

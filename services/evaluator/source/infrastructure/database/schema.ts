@@ -4,6 +4,7 @@ import type {
   EvaluationRequest,
   EvaluationResult,
   EvaluationStatus,
+  FailedEvaluation,
 } from "../../domain/evaluation.js";
 
 export const evaluations = pgTable("evaluations", {
@@ -11,4 +12,5 @@ export const evaluations = pgTable("evaluations", {
   status: text("status").$type<EvaluationStatus>().notNull(),
   request: jsonb("request").$type<EvaluationRequest>().notNull(),
   result: jsonb("result").$type<EvaluationResult>(),
+  error: jsonb("error").$type<FailedEvaluation["error"]>(),
 });

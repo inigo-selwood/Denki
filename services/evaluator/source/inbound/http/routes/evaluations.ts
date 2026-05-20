@@ -2,6 +2,7 @@ import { createRoute, z } from "@hono/zod-openapi";
 
 import {
   evaluationAcceptedSchema,
+  failedEvaluationSchema,
   evaluationIdParamsSchema,
   evaluationNotFoundSchema,
   evaluationRequestSchema,
@@ -12,6 +13,7 @@ import {
 import type { OpenAPIHono } from "@hono/zod-openapi";
 import type {
   EvaluationAccepted,
+  FailedEvaluation,
   EvaluationResult,
   EvaluationRequest,
   QueuedEvaluation,
@@ -23,7 +25,9 @@ export type SubmitEvaluation = (
 
 export type GetEvaluation = (
   evaluationId: string,
-) => Promise<QueuedEvaluation | EvaluationResult | undefined>;
+) => Promise<
+  FailedEvaluation | QueuedEvaluation | EvaluationResult | undefined
+>;
 
 export type EvaluationRoutesDependencies = {
   getEvaluation: GetEvaluation;
@@ -68,7 +72,11 @@ const getEvaluationRoute = createRoute({
       description: "Evaluation job status and result",
       content: {
         "application/json": {
-          schema: z.union([queuedEvaluationSchema, evaluationResultSchema]),
+          schema: z.union([
+            failedEvaluationSchema,
+            queuedEvaluationSchema,
+            evaluationResultSchema,
+          ]),
         },
       },
     },

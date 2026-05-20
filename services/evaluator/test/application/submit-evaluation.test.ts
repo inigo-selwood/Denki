@@ -34,6 +34,9 @@ function createRepository(events: string[]): EvaluationRepository {
     async markEvaluationRunning() {
       throw new Error("Unexpected running evaluation.");
     },
+    async markEvaluationFailed() {
+      throw new Error("Unexpected failed evaluation.");
+    },
     async completeEvaluation() {
       throw new Error("Unexpected completed evaluation.");
     },
@@ -89,6 +92,9 @@ describe("submitEvaluation", () => {
         },
         async markEvaluationRunning() {
           throw new Error("Unexpected running evaluation.");
+        },
+        async markEvaluationFailed() {
+          throw new Error("Unexpected failed evaluation.");
         },
         async completeEvaluation() {
           throw new Error("Unexpected completed evaluation.");

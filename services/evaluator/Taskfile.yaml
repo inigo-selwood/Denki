@@ -41,9 +41,8 @@ tasks:
     dotenv:
       - .env
     cmds:
-      - task database:start
-      - defer: { task: database:stop }
       - task database:reset
+      - defer: { task: database:stop }
       - npm run db:push
       - npm test
 

@@ -16,6 +16,7 @@ tasks:
   reset:
     desc: Reset the database service local Supabase database
     cmds:
+      - task: start
       - npm exec supabase -- db reset
 
   clean:

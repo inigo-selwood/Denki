@@ -1,1 +1,1 @@
-export const evaluationSubmittedEventName = "evaluator/evaluation.submitted";
+export const flowRunRequestedEventName = "evaluator/flow.run_requested";

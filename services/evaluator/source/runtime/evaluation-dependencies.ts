@@ -1,16 +1,22 @@
-import { evaluateSubmission } from "../application/evaluate-submission.js";
-import { getEvaluation } from "../application/get-evaluation.js";
-import { submitEvaluation } from "../application/submit-evaluation.js";
+import {
+  addFlowEvidence,
+  createFlow,
+  evaluateFlow,
+  getFlow,
+  runFlow,
+  setFlowConditions,
+  setFlowMetadata,
+} from "../application/flows.js";
 import { createDatabaseClient } from "../infrastructure/database/client.js";
-import { createDatabaseEvaluationRepository } from "../infrastructure/database/evaluation-repository.js";
-import { createInngestEvaluationQueue } from "../infrastructure/inngest/evaluation-queue.js";
+import { createDatabaseFlowRepository } from "../infrastructure/database/evaluation-repository.js";
+import { createInngestFlowQueue } from "../infrastructure/inngest/evaluation-queue.js";
 import { inngest } from "../infrastructure/inngest/client.js";
 import {
   createCompositeEvaluationQueue,
   createImmediateEvaluationQueue,
 } from "../infrastructure/memory/evaluation-queue.js";
 
-import type { EvaluationRoutesDependencies } from "../inbound/http/routes/evaluations.js";
+import type { FlowRoutesDependencies } from "../inbound/http/routes/flows.js";
 
 export type RuntimeEvaluationConfiguration = {
   database: {
@@ -23,7 +29,7 @@ export type RuntimeEvaluationConfiguration = {
 
 export function createRuntimeEvaluationDependencies(
   configuration: RuntimeEvaluationConfiguration,
-): EvaluationRoutesDependencies {
+): FlowRoutesDependencies {
   if (configuration.database.connectionUrl === undefined) {
     throw new Error(
       "Database connection settings are required for evaluator persistence.",
@@ -31,9 +37,9 @@ export function createRuntimeEvaluationDependencies(
   }
 
   const client = createDatabaseClient(configuration.database.connectionUrl);
-  const repository = createDatabaseEvaluationRepository(client.database);
-  const immediateQueue = createImmediateEvaluationQueue(async (submission) => {
-    await evaluateSubmission(submission, {
+  const repository = createDatabaseFlowRepository(client.database);
+  const immediateQueue = createImmediateEvaluationQueue(async (flowRun) => {
+    await evaluateFlow(flowRun, {
       repository,
     });
   });
@@ -41,20 +47,37 @@ export function createRuntimeEvaluationDependencies(
     configuration.queue.mode === "immediate"
       ? immediateQueue
       : createCompositeEvaluationQueue([
-          createInngestEvaluationQueue(inngest),
+          createInngestFlowQueue(inngest),
           immediateQueue,
         ]);
 
   return {
-    getEvaluation: (evaluationId) =>
-      getEvaluation(evaluationId, {
-        reader: repository,
-      }),
-    submitEvaluation: (request) =>
-      submitEvaluation(request, {
-        createEvaluationId: () => crypto.randomUUID(),
+    addFlowEvidence: (flowId, evidence) =>
+      addFlowEvidence(flowId, evidence, {
+        createEvidenceId: () => crypto.randomUUID(),
         repository,
+      }),
+    createFlow: () =>
+      createFlow({
+        createFlowId: () => crypto.randomUUID(),
+        repository,
+      }),
+    getFlow: (flowId) =>
+      getFlow(flowId, {
+        repository,
+      }),
+    runFlow: (flowId) =>
+      runFlow(flowId, {
         queue,
+        repository,
+      }),
+    setFlowConditions: (flowId, conditions) =>
+      setFlowConditions(flowId, conditions, {
+        repository,
+      }),
+    setFlowMetadata: (flowId, metadata) =>
+      setFlowMetadata(flowId, metadata, {
+        repository,
       }),
   };
 }

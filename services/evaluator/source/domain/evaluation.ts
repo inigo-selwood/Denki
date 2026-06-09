@@ -16,6 +16,12 @@ export const evidenceSchema = z
   })
   .openapi("Evidence");
 
+export const flowEvidenceSchema = evidenceSchema
+  .extend({
+    evidenceId: z.string().min(1),
+  })
+  .openapi("FlowEvidence");
+
 export const conditionSchema = z
   .object({
     statement: z.string().min(1),
@@ -65,6 +71,7 @@ export const conditionResultSchema = z
   .openapi("ConditionResult");
 
 export const evaluationStatusSchema = z.enum([
+  "draft",
   "queued",
   "running",
   "completed",
@@ -74,36 +81,83 @@ export const evaluationStatusSchema = z.enum([
 
 export const evaluationResultSchema = z
   .object({
-    evaluationId: z.string().min(1),
-    status: evaluationStatusSchema,
+    flowId: z.string().min(1),
+    status: z.enum(["completed", "completed_with_review"]),
     conditions: z.array(conditionResultSchema),
   })
-  .openapi("EvaluationResult");
+  .openapi("FlowResult");
 
-export const evaluationAcceptedSchema = z
+export const flowCreatedSchema = z
   .object({
-    evaluationId: z.string().min(1),
+    flowId: z.string().min(1),
+    status: z.literal("draft"),
+  })
+  .openapi("FlowCreated");
+
+export const flowQueuedSchema = z
+  .object({
+    flowId: z.string().min(1),
     status: z.literal("queued"),
   })
-  .openapi("EvaluationAccepted");
+  .openapi("FlowQueued");
 
-export const queuedEvaluationSchema = z
+export const flowDraftSchema = z
   .object({
-    evaluationId: z.string().min(1),
-    status: z.enum(["queued", "running"]),
-    request: evaluationRequestSchema,
+    flowId: z.string().min(1),
+    status: z.literal("draft"),
+    metadata: z.record(z.string(), z.unknown()).default({}),
+    evidenceCount: z.number().int().min(0),
+    conditionCount: z.number().int().min(0),
   })
-  .openapi("QueuedEvaluation");
+  .openapi("FlowDraft");
+
+export const flowProgressSchema = z
+  .object({
+    flowId: z.string().min(1),
+    status: z.enum(["queued", "running"]),
+  })
+  .openapi("FlowProgress");
 
 export const failedEvaluationSchema = z
   .object({
-    evaluationId: z.string().min(1),
+    flowId: z.string().min(1),
     status: z.literal("failed"),
     error: z.object({
       message: z.string().min(1),
     }),
   })
-  .openapi("FailedEvaluation");
+  .openapi("FailedFlow");
+
+export const flowMetadataInputSchema = z
+  .object({
+    metadata: z.record(z.string(), z.unknown()),
+  })
+  .openapi("FlowMetadataInput");
+
+export const flowConditionsInputSchema = z
+  .object({
+    conditions: z.array(conditionSchema).min(1),
+  })
+  .openapi("FlowConditionsInput");
+
+export const flowEvidenceInputSchema = z
+  .object({
+    evidence: z.array(evidenceSchema).min(1),
+  })
+  .openapi("FlowEvidenceInput");
+
+export const flowEvidenceAddedSchema = z
+  .object({
+    flowId: z.string().min(1),
+    evidenceIds: z.array(z.string().min(1)),
+  })
+  .openapi("FlowEvidenceAdded");
+
+export const flowClientErrorSchema = z
+  .object({
+    error: z.string().min(1),
+  })
+  .openapi("FlowClientError");
 
 export const evaluationNotFoundSchema = z
   .object({
@@ -111,7 +165,7 @@ export const evaluationNotFoundSchema = z
   })
   .openapi("EvaluationNotFound");
 
-export const evaluationIdParamsSchema = z.object({
+export const flowIdParamsSchema = z.object({
   id: z
     .string()
     .min(1)
@@ -124,6 +178,7 @@ export const evaluationIdParamsSchema = z.object({
 });
 
 export type Evidence = z.infer<typeof evidenceSchema>;
+export type FlowEvidence = z.infer<typeof flowEvidenceSchema>;
 export type Condition = z.infer<typeof conditionSchema>;
 export type EvaluationRequest = z.infer<typeof evaluationRequestSchema>;
 export type CriterionVerdict = z.infer<typeof criterionVerdictSchema>;
@@ -133,6 +188,10 @@ export type ConditionVerdict = z.infer<typeof conditionVerdictSchema>;
 export type ConditionResult = z.infer<typeof conditionResultSchema>;
 export type EvaluationStatus = z.infer<typeof evaluationStatusSchema>;
 export type EvaluationResult = z.infer<typeof evaluationResultSchema>;
-export type EvaluationAccepted = z.infer<typeof evaluationAcceptedSchema>;
-export type QueuedEvaluation = z.infer<typeof queuedEvaluationSchema>;
+export type FlowCreated = z.infer<typeof flowCreatedSchema>;
+export type FlowQueued = z.infer<typeof flowQueuedSchema>;
+export type FlowDraft = z.infer<typeof flowDraftSchema>;
+export type FlowProgress = z.infer<typeof flowProgressSchema>;
 export type FailedEvaluation = z.infer<typeof failedEvaluationSchema>;
+export type FlowEvidenceAdded = z.infer<typeof flowEvidenceAddedSchema>;
+export type FlowClientError = z.infer<typeof flowClientErrorSchema>;

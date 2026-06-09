@@ -12,7 +12,7 @@ type CreateConditionResultInput = {
 };
 
 type CreateEvaluationResultInput = {
-  evaluationId: string;
+  flowId: string;
   conditions: ConditionResult[];
 };
 
@@ -30,7 +30,7 @@ export function createEvaluationResult(
   input: CreateEvaluationResultInput,
 ): EvaluationResult {
   return {
-    evaluationId: input.evaluationId,
+    flowId: input.flowId,
     status: rollUpEvaluationStatus(input.conditions),
     conditions: input.conditions,
   };

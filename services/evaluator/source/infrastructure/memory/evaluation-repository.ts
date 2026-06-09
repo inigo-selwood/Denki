@@ -1,45 +1,91 @@
-import type {
-  EvaluationRecord,
-  EvaluationRepository,
-  EvaluationSubmission,
-} from "../../application/submit-evaluation.js";
+import type { FlowRecord, FlowRepository } from "../../application/flows.js";
 import type { EvaluationResult } from "../../domain/evaluation.js";
 
-export function createMemoryEvaluationRepository(): EvaluationRepository {
-  const evaluations = new Map<string, EvaluationRecord>();
+export function createMemoryFlowRepository(): FlowRepository {
+  const flows = new Map<string, FlowRecord>();
 
   return {
-    async createQueuedEvaluation(input) {
-      evaluations.set(input.evaluationId, {
-        evaluationId: input.evaluationId,
-        status: "queued",
-        request: input.request,
-      });
-    },
-    async getQueuedEvaluation(evaluationId) {
-      return evaluations.get(evaluationId);
-    },
-    async markEvaluationRunning(evaluationId) {
-      const evaluation = evaluations.get(evaluationId);
+    async addFlowEvidence(flowId, evidence) {
+      const flow = flows.get(flowId);
 
-      if (evaluation === undefined || evaluation.status !== "queued") {
+      if (flow === undefined || flow.status !== "draft") {
         return;
       }
 
-      evaluations.set(evaluationId, {
-        ...evaluation,
+      flows.set(flowId, {
+        ...flow,
+        evidence: [...flow.evidence, ...evidence],
+      });
+    },
+    async completeFlow(result: EvaluationResult) {
+      flows.set(result.flowId, result);
+    },
+    async createDraftFlow(flowId) {
+      flows.set(flowId, {
+        conditions: [],
+        evidence: [],
+        flowId,
+        metadata: {},
+        status: "draft",
+      });
+    },
+    async getFlow(flowId) {
+      return flows.get(flowId);
+    },
+    async markFlowFailed(flowId, error) {
+      flows.set(flowId, {
+        error,
+        flowId,
+        status: "failed",
+      });
+    },
+    async markFlowQueued(flowId) {
+      const flow = flows.get(flowId);
+
+      if (flow === undefined) {
+        return;
+      }
+
+      flows.set(flowId, {
+        flowId,
+        status: "queued",
+      });
+    },
+    async markFlowRunning(flowId) {
+      const flow = flows.get(flowId);
+
+      if (flow === undefined) {
+        return;
+      }
+
+      flows.set(flowId, {
+        flowId,
         status: "running",
       });
     },
-    async markEvaluationFailed(evaluationId, error) {
-      evaluations.set(evaluationId, {
-        evaluationId,
-        status: "failed",
-        error,
+    async setFlowConditions(flowId, conditions) {
+      const flow = flows.get(flowId);
+
+      if (flow === undefined || flow.status !== "draft") {
+        return;
+      }
+
+      flows.set(flowId, {
+        ...flow,
+        conditions,
       });
     },
-    async completeEvaluation(result: EvaluationResult) {
-      evaluations.set(result.evaluationId, result);
+    async setFlowMetadata(flowId, metadata) {
+      const flow = flows.get(flowId);
+
+      if (flow === undefined || flow.status !== "draft") {
+        return;
+      }
+
+      flows.set(flowId, {
+        ...flow,
+        metadata,
+      });
     },
   };
 }

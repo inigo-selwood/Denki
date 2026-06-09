@@ -1,27 +1,24 @@
-import type { EvaluationQueue } from "../../application/submit-evaluation.js";
-import type { EvaluationSubmission } from "../../application/submit-evaluation.js";
+import type { FlowQueue, FlowRun } from "../../application/flows.js";
 
-export type EvaluationExecutor = (
-  input: EvaluationSubmission,
-) => Promise<void>;
+export type FlowExecutor = (input: FlowRun) => Promise<void>;
 
 export function createImmediateEvaluationQueue(
-  executeEvaluation: EvaluationExecutor,
-): EvaluationQueue {
+  executeEvaluation: FlowExecutor,
+): FlowQueue {
   return {
-    async enqueueEvaluation(input) {
+    async enqueueFlow(input) {
       await executeEvaluation(input);
     },
   };
 }
 
 export function createCompositeEvaluationQueue(
-  queues: EvaluationQueue[],
-): EvaluationQueue {
+  queues: FlowQueue[],
+): FlowQueue {
   return {
-    async enqueueEvaluation(input) {
+    async enqueueFlow(input) {
       for (const queue of queues) {
-        await queue.enqueueEvaluation(input);
+        await queue.enqueueFlow(input);
       }
     },
   };

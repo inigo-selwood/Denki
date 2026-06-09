@@ -1,17 +1,15 @@
-import { evaluationSubmittedEventName } from "./events.js";
+import { flowRunRequestedEventName } from "./events.js";
 
 import type { Inngest } from "inngest";
-import type { EvaluationQueue } from "../../application/submit-evaluation.js";
+import type { FlowQueue } from "../../application/flows.js";
 
 type InngestClient = Pick<Inngest.Any, "send">;
 
-export function createInngestEvaluationQueue(
-  inngest: InngestClient,
-): EvaluationQueue {
+export function createInngestFlowQueue(inngest: InngestClient): FlowQueue {
   return {
-    async enqueueEvaluation(input) {
+    async enqueueFlow(input) {
       await inngest.send({
-        name: evaluationSubmittedEventName,
+        name: flowRunRequestedEventName,
         data: input,
       });
     },

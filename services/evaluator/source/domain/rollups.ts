@@ -2,7 +2,7 @@ import type {
   ConditionResult,
   ConditionVerdict,
   CriterionResult,
-  EvaluationStatus,
+  EvaluationResult,
 } from "./evaluation.js";
 
 export function rollUpConditionVerdict(
@@ -29,7 +29,7 @@ export function rollUpConditionVerdict(
 
 export function rollUpEvaluationStatus(
   conditions: ConditionResult[],
-): EvaluationStatus {
+): EvaluationResult["status"] {
   if (conditions.length === 0) {
     throw new Error("Cannot roll up an evaluation without conditions.");
   }

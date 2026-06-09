@@ -2,6 +2,7 @@ import {
   addFlowEvidence,
   createFlow,
   evaluateFlow,
+  FlowClientError,
   getFlow,
   runFlow,
   setFlowConditions,
@@ -15,8 +16,10 @@ import {
   createCompositeEvaluationQueue,
   createImmediateEvaluationQueue,
 } from "../infrastructure/memory/evaluation-queue.js";
+import { createReductoEvidenceIngestionProvider } from "../infrastructure/reducto/evidence-ingestion.js";
 
 import type { FlowRoutesDependencies } from "../inbound/http/routes/flows.js";
+import type { DocumentIngestionProvider } from "../application/flows.js";
 
 export type RuntimeEvaluationConfiguration = {
   database: {
@@ -24,6 +27,10 @@ export type RuntimeEvaluationConfiguration = {
   };
   queue: {
     mode: "immediate" | "inngest";
+  };
+  reducto: {
+    apiKey: string | undefined;
+    environment: "production" | "eu" | "au";
   };
 };
 
@@ -38,6 +45,7 @@ export function createRuntimeEvaluationDependencies(
 
   const client = createDatabaseClient(configuration.database.connectionUrl);
   const repository = createDatabaseFlowRepository(client.database);
+  const ingestionProvider = createRuntimeIngestionProvider(configuration);
   const immediateQueue = createImmediateEvaluationQueue(async (flowRun) => {
     await evaluateFlow(flowRun, {
       repository,
@@ -55,6 +63,7 @@ export function createRuntimeEvaluationDependencies(
     addFlowEvidence: (flowId, evidence) =>
       addFlowEvidence(flowId, evidence, {
         createEvidenceId: () => crypto.randomUUID(),
+        ingestionProvider,
         repository,
       }),
     createFlow: () =>
@@ -80,4 +89,21 @@ export function createRuntimeEvaluationDependencies(
         repository,
       }),
   };
+}
+
+function createRuntimeIngestionProvider(
+  configuration: RuntimeEvaluationConfiguration,
+): DocumentIngestionProvider {
+  if (configuration.reducto.apiKey === undefined) {
+    return {
+      async ingest() {
+        throw new FlowClientError("Reducto ingestion is not configured.");
+      },
+    };
+  }
+
+  return createReductoEvidenceIngestionProvider({
+    apiKey: configuration.reducto.apiKey,
+    environment: configuration.reducto.environment,
+  });
 }

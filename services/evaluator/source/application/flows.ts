@@ -6,9 +6,9 @@ import {
 import type {
   Condition,
   CriterionResult,
+  DocumentType,
   EvaluationRequest,
   EvaluationResult,
-  Evidence,
   FailedEvaluation,
   FlowCreated,
   FlowDraft,
@@ -61,6 +61,21 @@ export type FlowQueue = {
   enqueueFlow(input: FlowRun): Promise<void>;
 };
 
+export type FlowEvidenceUpload = {
+  content: Uint8Array;
+  documentType: DocumentType;
+  filename: string;
+  metadata: Record<string, unknown>;
+  mimeType: string;
+  sizeBytes: number;
+};
+
+export type DocumentIngestionProvider = {
+  ingest(
+    input: FlowEvidenceUpload & { evidenceId: string },
+  ): Promise<FlowEvidence>;
+};
+
 export type CreateFlowDependencies = {
   createFlowId: () => string;
   repository: FlowRepository;
@@ -68,6 +83,7 @@ export type CreateFlowDependencies = {
 
 export type AddFlowEvidenceDependencies = {
   createEvidenceId: () => string;
+  ingestionProvider: DocumentIngestionProvider;
   repository: FlowRepository;
 };
 
@@ -128,21 +144,26 @@ export async function setFlowConditions(
 
 export async function addFlowEvidence(
   flowId: string,
-  evidence: Evidence[],
+  upload: FlowEvidenceUpload,
   dependencies: AddFlowEvidenceDependencies,
 ): Promise<FlowEvidenceAdded> {
   await getMutableDraftFlow(flowId, dependencies.repository);
 
-  const evidenceWithIds = evidence.map((item) => ({
-    ...item,
-    evidenceId: dependencies.createEvidenceId(),
-  }));
+  if (!isSupportedEvidenceFile(upload)) {
+    throw new FlowUnsupportedMediaTypeError(upload.mimeType, upload.filename);
+  }
 
-  await dependencies.repository.addFlowEvidence(flowId, evidenceWithIds);
+  const evidenceId = dependencies.createEvidenceId();
+  const evidence = await dependencies.ingestionProvider.ingest({
+    ...upload,
+    evidenceId,
+  });
+
+  await dependencies.repository.addFlowEvidence(flowId, [evidence]);
 
   return {
     flowId,
-    evidenceIds: evidenceWithIds.map((item) => item.evidenceId),
+    evidenceIds: [evidence.evidenceId],
   };
 }
 
@@ -292,10 +313,63 @@ function getErrorMessage(error: unknown): string {
   return "Evaluation failed.";
 }
 
+function isSupportedEvidenceFile(upload: FlowEvidenceUpload): boolean {
+  const mimeType = upload.mimeType.toLowerCase();
+  const filename = upload.filename.toLowerCase();
+
+  if (SUPPORTED_EVIDENCE_MIME_TYPES.has(mimeType)) {
+    return true;
+  }
+
+  return SUPPORTED_EVIDENCE_EXTENSIONS.some((extension) =>
+    filename.endsWith(extension),
+  );
+}
+
+const SUPPORTED_EVIDENCE_MIME_TYPES = new Set([
+  "application/pdf",
+  "application/vnd.ms-excel",
+  "application/vnd.ms-excel.sheet.macroenabled.12",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "image/bmp",
+  "image/gif",
+  "image/heic",
+  "image/jpeg",
+  "image/png",
+  "image/tiff",
+  "text/csv",
+]);
+
+const SUPPORTED_EVIDENCE_EXTENSIONS = [
+  ".pdf",
+  ".xls",
+  ".xlsm",
+  ".xlsx",
+  ".csv",
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".gif",
+  ".bmp",
+  ".tif",
+  ".tiff",
+  ".heic",
+];
+
 export class FlowClientError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "FlowClientError";
+  }
+}
+
+export class FlowUnsupportedMediaTypeError extends Error {
+  constructor(
+    readonly mimeType: string,
+    readonly filename: string,
+  ) {
+    super(`Unsupported evidence file type: ${mimeType || filename}`);
+    this.name = "FlowUnsupportedMediaTypeError";
   }
 }
 

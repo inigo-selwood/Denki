@@ -1,6 +1,7 @@
 import { createRoute, z } from "@hono/zod-openapi";
 
 import {
+  documentTypeSchema,
   evaluationNotFoundSchema,
   evaluationResultSchema,
   failedEvaluationSchema,
@@ -15,17 +16,20 @@ import {
   flowProgressSchema,
   flowQueuedSchema,
 } from "../../../domain/evaluation.js";
+import { FlowClientError } from "../../../application/flows.js";
 
 import type { OpenAPIHono } from "@hono/zod-openapi";
 import type {
   Condition,
-  Evidence,
   FlowCreated,
   FlowDraft,
   FlowEvidenceAdded,
   FlowQueued,
 } from "../../../domain/evaluation.js";
-import type { FlowResponse } from "../../../application/flows.js";
+import type {
+  FlowEvidenceUpload,
+  FlowResponse,
+} from "../../../application/flows.js";
 
 export type CreateFlow = () => Promise<FlowCreated>;
 
@@ -41,7 +45,7 @@ export type SetFlowConditions = (
 
 export type AddFlowEvidence = (
   flowId: string,
-  evidence: Evidence[],
+  upload: FlowEvidenceUpload,
 ) => Promise<FlowEvidenceAdded>;
 
 export type RunFlow = (flowId: string) => Promise<FlowQueued>;
@@ -118,7 +122,7 @@ const addFlowEvidenceRoute = createRoute({
     body: {
       required: true,
       content: {
-        "application/json": {
+        "multipart/form-data": {
           schema: flowEvidenceInputSchema,
         },
       },
@@ -223,7 +227,12 @@ export function registerFlowRoutes(
     handleFlowError(context, async () => {
       const result = await dependencies.addFlowEvidence(
         context.req.valid("param").id,
-        context.req.valid("json").evidence,
+        await parseEvidenceUpload(
+          context.req.valid("form") as Record<
+            string,
+            FormDataEntryValue | FormDataEntryValue[]
+          >,
+        ),
       );
 
       return context.json(result, 200);
@@ -281,6 +290,14 @@ function flowErrorResponses() {
         },
       },
     },
+    415: {
+      description: "Evidence file type is not supported",
+      content: {
+        "application/json": {
+          schema: flowClientErrorSchema,
+        },
+      },
+    },
   };
 }
 
@@ -299,6 +316,78 @@ async function handleFlowError<T>(
       return context.json({ error: error.message }, 400);
     }
 
+    if (
+      error instanceof Error &&
+      error.name === "FlowUnsupportedMediaTypeError"
+    ) {
+      return context.json({ error: error.message }, 415);
+    }
+
     throw error;
   }
+}
+
+async function parseEvidenceUpload(
+  form: Record<string, FormDataEntryValue | FormDataEntryValue[]>,
+): Promise<FlowEvidenceUpload> {
+  const file = firstFormValue(form.file);
+  const documentType = firstFormValue(form.documentType);
+  const metadata = firstFormValue(form.metadata);
+
+  if (!(file instanceof File)) {
+    throw new FlowClientError("Evidence upload requires a file.");
+  }
+
+  if (typeof documentType !== "string") {
+    throw new FlowClientError("Evidence upload requires a documentType.");
+  }
+
+  const parsedDocumentType = documentTypeSchema.safeParse(documentType);
+
+  if (!parsedDocumentType.success) {
+    throw new FlowClientError("Unsupported documentType.");
+  }
+
+  return {
+    content: new Uint8Array(await file.arrayBuffer()),
+    documentType: parsedDocumentType.data,
+    filename: file.name,
+    metadata: parseEvidenceMetadata(metadata),
+    mimeType: file.type,
+    sizeBytes: file.size,
+  };
+}
+
+function parseEvidenceMetadata(value: FormDataEntryValue | null) {
+  if (value === null || value === "") {
+    return {};
+  }
+
+  if (typeof value !== "string") {
+    throw new FlowClientError("Evidence metadata must be a JSON object.");
+  }
+
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(value);
+  } catch {
+    throw new FlowClientError("Evidence metadata must be valid JSON.");
+  }
+
+  if (parsed === null || Array.isArray(parsed) || typeof parsed !== "object") {
+    throw new FlowClientError("Evidence metadata must be a JSON object.");
+  }
+
+  return parsed as Record<string, unknown>;
+}
+
+function firstFormValue(
+  value: FormDataEntryValue | FormDataEntryValue[] | undefined,
+): FormDataEntryValue | null {
+  if (Array.isArray(value)) {
+    return value[0] ?? null;
+  }
+
+  return value ?? null;
 }

@@ -1,5 +1,55 @@
 import { z } from "@hono/zod-openapi";
 
+export const documentTypeSchema = z
+  .enum([
+    "invoice",
+    "spreadsheet",
+    "platform_screenshot",
+    "policy_or_contract",
+    "report_or_statement",
+    "generic_document",
+  ])
+  .openapi("DocumentType");
+
+export const boundingBoxSchema = z
+  .object({
+    page: z.number().int().min(1),
+    left: z.number(),
+    top: z.number(),
+    width: z.number(),
+    height: z.number(),
+  })
+  .openapi("BoundingBox");
+
+export const evidenceBlockSchema = z
+  .object({
+    blockId: z.string().min(1),
+    type: z.string().min(1),
+    content: z.union([
+      z.string(),
+      z.record(z.string(), z.unknown()),
+      z.array(z.unknown()),
+    ]),
+    page: z.number().int().min(1),
+    bbox: boundingBoxSchema,
+    confidenceLabel: z.string().min(1).optional(),
+    sourceText: z.string().min(1).optional(),
+  })
+  .openapi("EvidenceBlock");
+
+export const evidenceIngestionSchema = z
+  .object({
+    provider: z.literal("reducto"),
+    providerFileId: z.string().min(1).optional(),
+    providerJobId: z.string().min(1).optional(),
+    studioLink: z.string().url().optional(),
+    durationSeconds: z.number().min(0).optional(),
+    usage: z.record(z.string(), z.unknown()).optional(),
+    text: z.string(),
+    blocks: z.array(evidenceBlockSchema),
+  })
+  .openapi("EvidenceIngestion");
+
 export const evidenceSchema = z
   .object({
     name: z.string().min(1).openapi({
@@ -7,12 +57,14 @@ export const evidenceSchema = z
         "Human-readable evidence name, such as a filename, email subject, report title, or export name.",
       example: "Quarterly access review policy.pdf",
     }),
-    content: z.union([
-      z.string().min(1),
-      z.record(z.string(), z.unknown()),
-      z.array(z.unknown()),
-    ]),
-    metadata: z.record(z.string(), z.unknown()).optional(),
+    documentType: documentTypeSchema,
+    originalFile: z.object({
+      filename: z.string().min(1),
+      mimeType: z.string().min(1),
+      sizeBytes: z.number().int().min(0),
+    }),
+    metadata: z.record(z.string(), z.unknown()).default({}),
+    ingestion: evidenceIngestionSchema,
   })
   .openapi("Evidence");
 
@@ -142,7 +194,11 @@ export const flowConditionsInputSchema = z
 
 export const flowEvidenceInputSchema = z
   .object({
-    evidence: z.array(evidenceSchema).min(1),
+    file: z.unknown().optional().openapi({
+      format: "binary",
+    }),
+    documentType: z.string().optional(),
+    metadata: z.string().optional(),
   })
   .openapi("FlowEvidenceInput");
 
@@ -177,6 +233,10 @@ export const flowIdParamsSchema = z.object({
     }),
 });
 
+export type DocumentType = z.infer<typeof documentTypeSchema>;
+export type BoundingBox = z.infer<typeof boundingBoxSchema>;
+export type EvidenceBlock = z.infer<typeof evidenceBlockSchema>;
+export type EvidenceIngestion = z.infer<typeof evidenceIngestionSchema>;
 export type Evidence = z.infer<typeof evidenceSchema>;
 export type FlowEvidence = z.infer<typeof flowEvidenceSchema>;
 export type Condition = z.infer<typeof conditionSchema>;

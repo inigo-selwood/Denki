@@ -12,18 +12,25 @@ type InngestConfiguration = {
   signingKey: string | undefined;
 };
 
+type ReductoConfiguration = {
+  apiKey: string | undefined;
+  environment: ReductoEnvironment;
+};
+
 type DatabaseConfiguration = {
   connectionUrl: string | undefined;
 };
 
 type Environment = "development" | "local" | "production";
 type QueueMode = "immediate" | "inngest";
+type ReductoEnvironment = "production" | "eu" | "au";
 
 type ServiceConfiguration = {
   environment: Environment;
   http: HttpConfiguration;
   openai: OpenAIConfiguration;
   inngest: InngestConfiguration;
+  reducto: ReductoConfiguration;
   database: DatabaseConfiguration;
   queue: {
     mode: QueueMode;
@@ -47,6 +54,10 @@ export function loadConfiguration(): ServiceConfiguration {
     inngest: {
       eventKey: readOptionalEnvironmentVariable("INNGEST_EVENT_KEY"),
       signingKey: readOptionalEnvironmentVariable("INNGEST_SIGNING_KEY"),
+    },
+    reducto: {
+      apiKey: readOptionalEnvironmentVariable("REDUCTO_API_KEY"),
+      environment: parseReductoEnvironment(process.env.REDUCTO_ENVIRONMENT),
     },
     database: {
       connectionUrl: createDatabaseConnectionUrl(environment),
@@ -125,6 +136,20 @@ function parseEnvironment(value: string | undefined): Environment {
   throw new Error(`Invalid ENVIRONMENT value: ${value}`);
 }
 
+function parseReductoEnvironment(
+  value: string | undefined,
+): ReductoEnvironment {
+  if (value === undefined || value.trim() === "") {
+    return "production";
+  }
+
+  if (value === "production" || value === "eu" || value === "au") {
+    return value;
+  }
+
+  throw new Error(`Invalid REDUCTO_ENVIRONMENT value: ${value}`);
+}
+
 function createQueueMode(environment: Environment): QueueMode {
   if (environment === "development" || environment === "local") {
     return "immediate";
@@ -150,6 +175,10 @@ function validateConfiguration(configuration: ServiceConfiguration): void {
 
   if (configuration.inngest.signingKey === undefined) {
     missing.push("INNGEST_SIGNING_KEY");
+  }
+
+  if (configuration.reducto.apiKey === undefined) {
+    missing.push("REDUCTO_API_KEY");
   }
 
   if (missing.length > 0) {

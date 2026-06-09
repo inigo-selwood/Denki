@@ -1,83 +1,93 @@
 import { describe, expect, it } from "vitest";
 
-import { createMemoryEvaluationRepository } from "../../../source/infrastructure/memory/evaluation-repository.js";
+import { createMemoryFlowRepository } from "../../../source/infrastructure/memory/evaluation-repository.js";
 
-describe("memory evaluation repository", () => {
-  it("stores and returns queued evaluations", async () => {
-    const repository = createMemoryEvaluationRepository();
-    const request = {
-      evidence: [
-        {
-          name: "Quarterly access review policy.pdf",
-          content: "Access reviews are performed quarterly.",
-        },
-      ],
-      conditions: [
-        {
-          statement: "Access reviews are performed quarterly.",
-          criteria: ["Evidence shows a quarterly access review."],
-        },
-      ],
-    };
+const condition = {
+  statement: "Access reviews are performed quarterly.",
+  criteria: ["Evidence shows a quarterly access review."],
+};
 
-    await repository.createQueuedEvaluation({
-      evaluationId: "evaluation-1",
-      request,
+const evidence = {
+  evidenceId: "evidence-1",
+  name: "Quarterly access review policy.pdf",
+  content: "Access reviews are performed quarterly.",
+};
+
+describe("memory flow repository", () => {
+  it("stores and returns draft flows", async () => {
+    const repository = createMemoryFlowRepository();
+
+    await repository.createDraftFlow("flow-1");
+
+    await expect(repository.getFlow("flow-1")).resolves.toEqual({
+      conditions: [],
+      evidence: [],
+      flowId: "flow-1",
+      metadata: {},
+      status: "draft",
     });
+  });
 
-    await expect(
-      repository.getQueuedEvaluation("evaluation-1"),
-    ).resolves.toEqual({
-      evaluationId: "evaluation-1",
+  it("returns undefined for missing flows", async () => {
+    const repository = createMemoryFlowRepository();
+
+    await expect(repository.getFlow("missing-flow")).resolves.toBeUndefined();
+  });
+
+  it("replaces metadata and conditions on draft flows", async () => {
+    const repository = createMemoryFlowRepository();
+
+    await repository.createDraftFlow("flow-1");
+    await repository.setFlowMetadata("flow-1", {
+      owner: "Internal Audit",
+    });
+    await repository.setFlowConditions("flow-1", [condition]);
+
+    await expect(repository.getFlow("flow-1")).resolves.toEqual({
+      conditions: [condition],
+      evidence: [],
+      flowId: "flow-1",
+      metadata: {
+        owner: "Internal Audit",
+      },
+      status: "draft",
+    });
+  });
+
+  it("appends evidence on draft flows", async () => {
+    const repository = createMemoryFlowRepository();
+
+    await repository.createDraftFlow("flow-1");
+    await repository.addFlowEvidence("flow-1", [evidence]);
+
+    await expect(repository.getFlow("flow-1")).resolves.toMatchObject({
+      evidence: [evidence],
+    });
+  });
+
+  it("stores and returns queued and running flows", async () => {
+    const repository = createMemoryFlowRepository();
+
+    await repository.createDraftFlow("flow-1");
+    await repository.markFlowQueued("flow-1");
+
+    await expect(repository.getFlow("flow-1")).resolves.toEqual({
+      flowId: "flow-1",
       status: "queued",
-      request,
     });
-  });
 
-  it("returns undefined for missing evaluations", async () => {
-    const repository = createMemoryEvaluationRepository();
+    await repository.markFlowRunning("flow-1");
 
-    await expect(
-      repository.getQueuedEvaluation("missing-evaluation"),
-    ).resolves.toBeUndefined();
-  });
-
-  it("stores and returns running evaluations", async () => {
-    const repository = createMemoryEvaluationRepository();
-    const request = {
-      evidence: [
-        {
-          name: "Quarterly access review policy.pdf",
-          content: "Access reviews are performed quarterly.",
-        },
-      ],
-      conditions: [
-        {
-          statement: "Access reviews are performed quarterly.",
-          criteria: ["Evidence shows a quarterly access review."],
-        },
-      ],
-    };
-
-    await repository.createQueuedEvaluation({
-      evaluationId: "evaluation-1",
-      request,
-    });
-    await repository.markEvaluationRunning("evaluation-1");
-
-    await expect(
-      repository.getQueuedEvaluation("evaluation-1"),
-    ).resolves.toEqual({
-      evaluationId: "evaluation-1",
+    await expect(repository.getFlow("flow-1")).resolves.toEqual({
+      flowId: "flow-1",
       status: "running",
-      request,
     });
   });
 
-  it("stores and returns completed evaluations", async () => {
-    const repository = createMemoryEvaluationRepository();
+  it("stores and returns completed flows", async () => {
+    const repository = createMemoryFlowRepository();
     const result = {
-      evaluationId: "evaluation-1",
+      flowId: "flow-1",
       status: "completed_with_review" as const,
       conditions: [
         {
@@ -95,31 +105,27 @@ describe("memory evaluation repository", () => {
               },
               rationale:
                 "Manual review required for criterion: Evidence shows a quarterly access review.",
-              evidenceIds: ["evidence:0"],
+              evidenceIds: ["evidence-1"],
             },
           ],
         },
       ],
     };
 
-    await repository.completeEvaluation(result);
+    await repository.completeFlow(result);
 
-    await expect(
-      repository.getQueuedEvaluation("evaluation-1"),
-    ).resolves.toEqual(result);
+    await expect(repository.getFlow("flow-1")).resolves.toEqual(result);
   });
 
-  it("stores and returns failed evaluations", async () => {
-    const repository = createMemoryEvaluationRepository();
+  it("stores and returns failed flows", async () => {
+    const repository = createMemoryFlowRepository();
 
-    await repository.markEvaluationFailed("evaluation-1", {
+    await repository.markFlowFailed("flow-1", {
       message: "Could not evaluate evidence.",
     });
 
-    await expect(
-      repository.getQueuedEvaluation("evaluation-1"),
-    ).resolves.toEqual({
-      evaluationId: "evaluation-1",
+    await expect(repository.getFlow("flow-1")).resolves.toEqual({
+      flowId: "flow-1",
       status: "failed",
       error: {
         message: "Could not evaluate evidence.",

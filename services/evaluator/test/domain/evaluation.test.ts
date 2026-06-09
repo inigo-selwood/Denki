@@ -65,7 +65,7 @@ describe("evaluation domain schemas", () => {
 
   it("accepts evaluation results with completed_with_review status", () => {
     const result = evaluationResultSchema.parse({
-      evaluationId: "evaluation-1",
+      flowId: "flow-1",
       status: "completed_with_review",
       conditions: [
         {

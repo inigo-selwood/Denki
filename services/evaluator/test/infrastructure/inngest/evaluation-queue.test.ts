@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { createInngestEvaluationQueue } from "../../../source/infrastructure/inngest/evaluation-queue.js";
-import { evaluationSubmittedEventName } from "../../../source/infrastructure/inngest/events.js";
+import { createInngestFlowQueue } from "../../../source/infrastructure/inngest/evaluation-queue.js";
+import { flowRunRequestedEventName } from "../../../source/infrastructure/inngest/events.js";
 
-describe("Inngest evaluation queue", () => {
-  it("sends submitted evaluation events", async () => {
+describe("Inngest flow queue", () => {
+  it("sends flow run events", async () => {
     const sent: unknown[] = [];
-    const queue = createInngestEvaluationQueue({
+    const queue = createInngestFlowQueue({
       async send(payload) {
         sent.push(payload);
         return {
@@ -15,11 +15,12 @@ describe("Inngest evaluation queue", () => {
       },
     });
 
-    await queue.enqueueEvaluation({
-      evaluationId: "evaluation-1",
+    await queue.enqueueFlow({
+      flowId: "flow-1",
       request: {
         evidence: [
           {
+            evidenceId: "evidence-1",
             name: "Quarterly access review policy.pdf",
             content: "Access reviews are performed quarterly.",
           },
@@ -35,12 +36,13 @@ describe("Inngest evaluation queue", () => {
 
     expect(sent).toEqual([
       {
-        name: evaluationSubmittedEventName,
+        name: flowRunRequestedEventName,
         data: {
-          evaluationId: "evaluation-1",
+          flowId: "flow-1",
           request: {
             evidence: [
               {
+                evidenceId: "evidence-1",
                 name: "Quarterly access review policy.pdf",
                 content: "Access reviews are performed quarterly.",
               },

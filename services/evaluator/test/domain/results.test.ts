@@ -76,7 +76,7 @@ describe("condition result builder", () => {
 describe("evaluation result builder", () => {
   it("creates completed evaluation results when every condition is met", () => {
     const result = createEvaluationResult({
-      evaluationId: "evaluation-1",
+      flowId: "flow-1",
       conditions: [
         createConditionResult({
           conditionId: "condition-1",
@@ -90,7 +90,7 @@ describe("evaluation result builder", () => {
 
   it("creates completed-with-review results when a condition fails", () => {
     const result = createEvaluationResult({
-      evaluationId: "evaluation-1",
+      flowId: "flow-1",
       conditions: [
         createConditionResult({
           conditionId: "condition-1",
@@ -104,7 +104,7 @@ describe("evaluation result builder", () => {
 
   it("creates completed-with-review results when a condition needs review", () => {
     const result = createEvaluationResult({
-      evaluationId: "evaluation-1",
+      flowId: "flow-1",
       conditions: [
         createConditionResult({
           conditionId: "condition-1",

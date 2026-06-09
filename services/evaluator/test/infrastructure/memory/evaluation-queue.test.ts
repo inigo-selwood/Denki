@@ -5,13 +5,14 @@ import {
   createImmediateEvaluationQueue,
 } from "../../../source/infrastructure/memory/evaluation-queue.js";
 
-import type { EvaluationSubmission } from "../../../source/application/submit-evaluation.js";
+import type { FlowRun } from "../../../source/application/flows.js";
 
-const submission: EvaluationSubmission = {
-  evaluationId: "evaluation-1",
+const flowRun: FlowRun = {
+  flowId: "flow-1",
   request: {
     evidence: [
       {
+        evidenceId: "evidence-1",
         name: "Quarterly access review policy.pdf",
         content: "Access reviews are performed quarterly.",
       },
@@ -26,36 +27,36 @@ const submission: EvaluationSubmission = {
 };
 
 describe("immediate evaluation queue", () => {
-  it("runs submitted evaluations immediately", async () => {
-    const executed: EvaluationSubmission[] = [];
+  it("runs flow requests immediately", async () => {
+    const executed: FlowRun[] = [];
     const queue = createImmediateEvaluationQueue(async (input) => {
       executed.push(input);
     });
 
-    await queue.enqueueEvaluation(submission);
+    await queue.enqueueFlow(flowRun);
 
-    expect(executed).toEqual([submission]);
+    expect(executed).toEqual([flowRun]);
   });
 });
 
 describe("composite evaluation queue", () => {
-  it("passes submitted evaluations to each queue in order", async () => {
+  it("passes flow requests to each queue in order", async () => {
     const events: string[] = [];
     const queue = createCompositeEvaluationQueue([
       {
-        async enqueueEvaluation(input) {
-          events.push(`first:${input.evaluationId}`);
+        async enqueueFlow(input) {
+          events.push(`first:${input.flowId}`);
         },
       },
       {
-        async enqueueEvaluation(input) {
-          events.push(`second:${input.evaluationId}`);
+        async enqueueFlow(input) {
+          events.push(`second:${input.flowId}`);
         },
       },
     ]);
 
-    await queue.enqueueEvaluation(submission);
+    await queue.enqueueFlow(flowRun);
 
-    expect(events).toEqual(["first:evaluation-1", "second:evaluation-1"]);
+    expect(events).toEqual(["first:flow-1", "second:flow-1"]);
   });
 });

@@ -12,8 +12,13 @@ describe("API documentation endpoints", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toContain("application/json");
     expect(document.paths).toHaveProperty("/health");
-    expect(document.paths).toHaveProperty("/evaluations");
-    expect(document.paths).toHaveProperty("/evaluations/{id}");
+    expect(document.paths).toHaveProperty("/flows");
+    expect(document.paths).toHaveProperty("/flows/{id}");
+    expect(document.paths).toHaveProperty("/flows/{id}/conditions");
+    expect(document.paths).toHaveProperty("/flows/{id}/evidence");
+    expect(document.paths).toHaveProperty("/flows/{id}/metadata");
+    expect(document.paths).toHaveProperty("/flows/{id}/run");
+    expect(document.paths).not.toHaveProperty("/evaluations");
   });
 
   it("serves the interactive API documentation", async () => {

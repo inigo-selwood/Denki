@@ -2,13 +2,10 @@ import { eq } from "drizzle-orm";
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { createDatabaseClient } from "../../../source/infrastructure/database/client.js";
-import { createDatabaseEvaluationRepository } from "../../../source/infrastructure/database/evaluation-repository.js";
-import { evaluations } from "../../../source/infrastructure/database/schema.js";
+import { createDatabaseFlowRepository } from "../../../source/infrastructure/database/evaluation-repository.js";
+import { flows } from "../../../source/infrastructure/database/schema.js";
 
-import type {
-  EvaluationRequest,
-  EvaluationResult,
-} from "../../../source/domain/evaluation.js";
+import type { EvaluationResult } from "../../../source/domain/evaluation.js";
 
 const databaseUrl = createDatabaseUrl();
 const describeDatabase = databaseUrl === undefined ? describe.skip : describe;
@@ -17,26 +14,22 @@ const client =
 const repository =
   client === undefined
     ? undefined
-    : createDatabaseEvaluationRepository(client.database);
-const evaluationId = "evaluation-repository-test";
+    : createDatabaseFlowRepository(client.database);
+const flowId = "flow-repository-test";
 
-const request: EvaluationRequest = {
-  evidence: [
-    {
-      name: "Quarterly access review policy.pdf",
-      content: "Access reviews are performed quarterly.",
-    },
-  ],
-  conditions: [
-    {
-      statement: "Access reviews are performed quarterly.",
-      criteria: ["Evidence shows a quarterly access review."],
-    },
-  ],
+const condition = {
+  statement: "Access reviews are performed quarterly.",
+  criteria: ["Evidence shows a quarterly access review."],
+};
+
+const evidence = {
+  evidenceId: "evidence-1",
+  name: "Quarterly access review policy.pdf",
+  content: "Access reviews are performed quarterly.",
 };
 
 const result: EvaluationResult = {
-  evaluationId,
+  flowId,
   status: "completed_with_review",
   conditions: [
     {
@@ -54,85 +47,89 @@ const result: EvaluationResult = {
           },
           rationale:
             "Manual review required for criterion: Evidence shows a quarterly access review.",
-          evidenceIds: ["evidence:0"],
+          evidenceIds: ["evidence-1"],
         },
       ],
     },
   ],
 };
 
-describeDatabase("createDatabaseEvaluationRepository", () => {
+describeDatabase("createDatabaseFlowRepository", () => {
   beforeEach(async () => {
-    await deleteEvaluation();
+    await deleteFlow();
   });
 
   afterEach(async () => {
-    await deleteEvaluation();
+    await deleteFlow();
   });
 
   afterAll(async () => {
     await client?.close();
   });
 
-  it("persists queued evaluations", async () => {
-    await repository?.createQueuedEvaluation({
-      evaluationId,
-      request,
-    });
+  it("persists draft flows", async () => {
+    await repository?.createDraftFlow(flowId);
 
-    await expect(
-      repository?.getQueuedEvaluation(evaluationId),
-    ).resolves.toEqual({
-      evaluationId,
+    await expect(repository?.getFlow(flowId)).resolves.toEqual({
+      conditions: [],
+      evidence: [],
+      flowId,
+      metadata: {},
+      status: "draft",
+    });
+  });
+
+  it("persists metadata, conditions, and evidence", async () => {
+    await repository?.createDraftFlow(flowId);
+    await repository?.setFlowMetadata(flowId, {
+      owner: "Internal Audit",
+    });
+    await repository?.setFlowConditions(flowId, [condition]);
+    await repository?.addFlowEvidence(flowId, [evidence]);
+
+    await expect(repository?.getFlow(flowId)).resolves.toEqual({
+      conditions: [condition],
+      evidence: [evidence],
+      flowId,
+      metadata: {
+        owner: "Internal Audit",
+      },
+      status: "draft",
+    });
+  });
+
+  it("persists queued and running flows", async () => {
+    await repository?.createDraftFlow(flowId);
+    await repository?.markFlowQueued(flowId);
+
+    await expect(repository?.getFlow(flowId)).resolves.toEqual({
+      flowId,
       status: "queued",
-      request,
-    });
-  });
-
-  it("persists completed evaluation results", async () => {
-    await repository?.createQueuedEvaluation({
-      evaluationId,
-      request,
     });
 
-    await repository?.completeEvaluation(result);
+    await repository?.markFlowRunning(flowId);
 
-    await expect(
-      repository?.getQueuedEvaluation(evaluationId),
-    ).resolves.toEqual(result);
-  });
-
-  it("persists running evaluations", async () => {
-    await repository?.createQueuedEvaluation({
-      evaluationId,
-      request,
-    });
-
-    await repository?.markEvaluationRunning(evaluationId);
-
-    await expect(
-      repository?.getQueuedEvaluation(evaluationId),
-    ).resolves.toEqual({
-      evaluationId,
+    await expect(repository?.getFlow(flowId)).resolves.toEqual({
+      flowId,
       status: "running",
-      request,
     });
   });
 
-  it("persists failed evaluations", async () => {
-    await repository?.createQueuedEvaluation({
-      evaluationId,
-      request,
-    });
+  it("persists completed flow results", async () => {
+    await repository?.createDraftFlow(flowId);
+    await repository?.completeFlow(result);
 
-    await repository?.markEvaluationFailed(evaluationId, {
+    await expect(repository?.getFlow(flowId)).resolves.toEqual(result);
+  });
+
+  it("persists failed flows", async () => {
+    await repository?.createDraftFlow(flowId);
+    await repository?.markFlowFailed(flowId, {
       message: "Could not evaluate evidence.",
     });
 
-    await expect(
-      repository?.getQueuedEvaluation(evaluationId),
-    ).resolves.toEqual({
-      evaluationId,
+    await expect(repository?.getFlow(flowId)).resolves.toEqual({
+      flowId,
       status: "failed",
       error: {
         message: "Could not evaluate evidence.",
@@ -141,10 +138,8 @@ describeDatabase("createDatabaseEvaluationRepository", () => {
   });
 });
 
-async function deleteEvaluation() {
-  await client?.database
-    .delete(evaluations)
-    .where(eq(evaluations.id, evaluationId));
+async function deleteFlow() {
+  await client?.database.delete(flows).where(eq(flows.id, flowId));
 }
 
 function createDatabaseUrl() {

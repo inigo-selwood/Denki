@@ -4,19 +4,14 @@ import {
   createCompositeEvaluationQueue,
   createImmediateEvaluationQueue,
 } from "../../../source/infrastructure/memory/evaluation-queue.js";
+import { createFlowEvidence } from "../../fixtures/evidence.js";
 
 import type { FlowRun } from "../../../source/application/flows.js";
 
 const flowRun: FlowRun = {
   flowId: "flow-1",
   request: {
-    evidence: [
-      {
-        evidenceId: "evidence-1",
-        name: "Quarterly access review policy.pdf",
-        content: "Access reviews are performed quarterly.",
-      },
-    ],
+    evidence: [createFlowEvidence()],
     conditions: [
       {
         statement: "Access reviews are performed quarterly.",

@@ -2,19 +2,17 @@ import { describe, expect, it } from "vitest";
 
 import {
   conditionResultSchema,
+  documentTypeSchema,
   evaluationRequestSchema,
   evaluationResultSchema,
+  flowEvidenceSchema,
 } from "../../source/domain/evaluation.js";
+import { createFlowEvidence } from "../fixtures/evidence.js";
 
 describe("evaluation domain schemas", () => {
   it("accepts a structured evaluation request", () => {
     const request = evaluationRequestSchema.parse({
-      evidence: [
-        {
-          name: "Quarterly access review policy.pdf",
-          content: "Access reviews are performed quarterly.",
-        },
-      ],
+      evidence: [createFlowEvidence()],
       conditions: [
         {
           statement: "Access reviews are performed quarterly.",
@@ -26,6 +24,31 @@ describe("evaluation domain schemas", () => {
     expect(request.conditions[0]?.criteria[0]).toBe(
       "The evidence shows a quarterly access review.",
     );
+  });
+
+  it("accepts supported document types", () => {
+    expect(documentTypeSchema.parse("invoice")).toBe("invoice");
+    expect(documentTypeSchema.parse("platform_screenshot")).toBe(
+      "platform_screenshot",
+    );
+  });
+
+  it("rejects unsupported document types", () => {
+    expect(documentTypeSchema.safeParse("random_document").success).toBe(
+      false,
+    );
+  });
+
+  it("accepts normalized evidence blocks with bounding boxes", () => {
+    const evidence = flowEvidenceSchema.parse(createFlowEvidence());
+
+    expect(evidence.ingestion.blocks[0]).toMatchObject({
+      content: "Access reviews are performed quarterly.",
+      page: 1,
+      bbox: {
+        page: 1,
+      },
+    });
   });
 
   it("rejects evaluation requests without evidence", () => {

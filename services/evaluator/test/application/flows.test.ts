@@ -6,6 +6,7 @@ import {
   evaluateFlow,
   FlowClientError,
   FlowNotFoundError,
+  FlowUnsupportedMediaTypeError,
   getFlow,
   runFlow,
   setFlowConditions,
@@ -14,19 +15,16 @@ import {
 import { createMemoryFlowRepository } from "../../source/infrastructure/memory/evaluation-repository.js";
 
 import type {
+  DocumentIngestionProvider,
   FlowQueue,
   FlowRepository,
   FlowRun,
 } from "../../source/application/flows.js";
+import type { FlowEvidence } from "../../source/domain/evaluation.js";
 
 const condition = {
   statement: "Access reviews are performed quarterly.",
   criteria: ["Evidence shows a quarterly access review."],
-};
-
-const evidence = {
-  name: "Quarterly access review policy.pdf",
-  content: "Access reviews are performed quarterly.",
 };
 
 describe("flow application", () => {
@@ -82,24 +80,77 @@ describe("flow application", () => {
     });
   });
 
-  it("adds evidence with generated evidence IDs", async () => {
+  it("ingests evidence with generated evidence IDs before persisting", async () => {
     const repository = createMemoryFlowRepository();
+    const ingested: string[] = [];
 
     await repository.createDraftFlow("flow-1");
 
     await expect(
-      addFlowEvidence("flow-1", [evidence], {
+      addFlowEvidence("flow-1", createUpload(), {
         createEvidenceId: () => "evidence-1",
+        ingestionProvider: {
+          async ingest(input) {
+            ingested.push(input.evidenceId);
+
+            return createEvidence(input.evidenceId);
+          },
+        },
         repository,
       }),
     ).resolves.toEqual({
       evidenceIds: ["evidence-1"],
       flowId: "flow-1",
     });
+    expect(ingested).toEqual(["evidence-1"]);
 
     await expect(getFlow("flow-1", { repository })).resolves.toMatchObject({
       evidenceCount: 1,
     });
+  });
+
+  it("does not persist evidence when ingestion fails", async () => {
+    const repository = createMemoryFlowRepository();
+
+    await repository.createDraftFlow("flow-1");
+
+    await expect(
+      addFlowEvidence("flow-1", createUpload(), {
+        createEvidenceId: () => "evidence-1",
+        ingestionProvider: {
+          async ingest() {
+            throw new Error("Reducto parse failed.");
+          },
+        },
+        repository,
+      }),
+    ).rejects.toThrow("Reducto parse failed.");
+
+    await expect(getFlow("flow-1", { repository })).resolves.toMatchObject({
+      evidenceCount: 0,
+    });
+  });
+
+  it("rejects unsupported evidence file formats", async () => {
+    const repository = createMemoryFlowRepository();
+
+    await repository.createDraftFlow("flow-1");
+
+    await expect(
+      addFlowEvidence(
+        "flow-1",
+        {
+          ...createUpload(),
+          filename: "notes.exe",
+          mimeType: "application/x-msdownload",
+        },
+        {
+          createEvidenceId: () => "evidence-1",
+          ingestionProvider: createIngestionProvider(),
+          repository,
+        },
+      ),
+    ).rejects.toThrow(FlowUnsupportedMediaTypeError);
   });
 
   it("rejects running flows without evidence and conditions", async () => {
@@ -119,12 +170,7 @@ describe("flow application", () => {
 
     await repository.createDraftFlow("flow-1");
     await repository.setFlowConditions("flow-1", [condition]);
-    await repository.addFlowEvidence("flow-1", [
-      {
-        ...evidence,
-        evidenceId: "evidence-1",
-      },
-    ]);
+    await repository.addFlowEvidence("flow-1", [createEvidence("evidence-1")]);
 
     await expect(runFlow("flow-1", { queue, repository })).resolves.toEqual({
       flowId: "flow-1",
@@ -135,12 +181,7 @@ describe("flow application", () => {
         flowId: "flow-1",
         request: {
           conditions: [condition],
-          evidence: [
-            {
-              ...evidence,
-              evidenceId: "evidence-1",
-            },
-          ],
+          evidence: [createEvidence("evidence-1")],
           metadata: {},
         },
       },
@@ -176,12 +217,7 @@ describe("flow application", () => {
       flowId: "flow-1",
       request: {
         conditions: [condition],
-        evidence: [
-          {
-            ...evidence,
-            evidenceId: "evidence-1",
-          },
-        ],
+        evidence: [createEvidence("evidence-1")],
         metadata: {},
       },
     };
@@ -228,7 +264,7 @@ describe("flow application", () => {
           flowId: "flow-1",
           request: {
             conditions: [condition],
-            evidence: [{ ...evidence, evidenceId: "evidence-1" }],
+            evidence: [createEvidence("evidence-1")],
             metadata: {},
           },
         },
@@ -237,6 +273,65 @@ describe("flow application", () => {
     ).rejects.toThrow(error);
   });
 });
+
+function createUpload() {
+  return {
+    content: new Uint8Array([1, 2, 3]),
+    documentType: "policy_or_contract" as const,
+    filename: "Quarterly access review policy.pdf",
+    metadata: {
+      owner: "Internal Audit",
+    },
+    mimeType: "application/pdf",
+    sizeBytes: 3,
+  };
+}
+
+function createEvidence(evidenceId: string): FlowEvidence {
+  return {
+    evidenceId,
+    documentType: "policy_or_contract",
+    name: "Quarterly access review policy.pdf",
+    originalFile: {
+      filename: "Quarterly access review policy.pdf",
+      mimeType: "application/pdf",
+      sizeBytes: 3,
+    },
+    metadata: {
+      owner: "Internal Audit",
+    },
+    ingestion: {
+      provider: "reducto",
+      providerFileId: "reducto://file-1",
+      providerJobId: "job-1",
+      text: "Access reviews are performed quarterly.",
+      blocks: [
+        {
+          blockId: "chunk:0:block:0",
+          type: "Text",
+          content: "Access reviews are performed quarterly.",
+          page: 1,
+          bbox: {
+            page: 1,
+            left: 0.1,
+            top: 0.2,
+            width: 0.3,
+            height: 0.4,
+          },
+          confidenceLabel: "high",
+        },
+      ],
+    },
+  };
+}
+
+function createIngestionProvider(): DocumentIngestionProvider {
+  return {
+    async ingest(input) {
+      return createEvidence(input.evidenceId);
+    },
+  };
+}
 
 function createQueue(): FlowQueue & { enqueued: FlowRun[] } {
   const enqueued: FlowRun[] = [];

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { createInngestFlowQueue } from "../../../source/infrastructure/inngest/evaluation-queue.js";
 import { flowRunRequestedEventName } from "../../../source/infrastructure/inngest/events.js";
+import { createFlowEvidence } from "../../fixtures/evidence.js";
 
 describe("Inngest flow queue", () => {
   it("sends flow run events", async () => {
@@ -18,13 +19,7 @@ describe("Inngest flow queue", () => {
     await queue.enqueueFlow({
       flowId: "flow-1",
       request: {
-        evidence: [
-          {
-            evidenceId: "evidence-1",
-            name: "Quarterly access review policy.pdf",
-            content: "Access reviews are performed quarterly.",
-          },
-        ],
+        evidence: [createFlowEvidence()],
         conditions: [
           {
             statement: "Access reviews are performed quarterly.",
@@ -40,13 +35,7 @@ describe("Inngest flow queue", () => {
         data: {
           flowId: "flow-1",
           request: {
-            evidence: [
-              {
-                evidenceId: "evidence-1",
-                name: "Quarterly access review policy.pdf",
-                content: "Access reviews are performed quarterly.",
-              },
-            ],
+            evidence: [createFlowEvidence()],
             conditions: [
               {
                 statement: "Access reviews are performed quarterly.",

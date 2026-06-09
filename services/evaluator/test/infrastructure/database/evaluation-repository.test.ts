@@ -4,6 +4,7 @@ import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createDatabaseClient } from "../../../source/infrastructure/database/client.js";
 import { createDatabaseFlowRepository } from "../../../source/infrastructure/database/evaluation-repository.js";
 import { flows } from "../../../source/infrastructure/database/schema.js";
+import { createFlowEvidence } from "../../fixtures/evidence.js";
 
 import type { EvaluationResult } from "../../../source/domain/evaluation.js";
 
@@ -22,11 +23,7 @@ const condition = {
   criteria: ["Evidence shows a quarterly access review."],
 };
 
-const evidence = {
-  evidenceId: "evidence-1",
-  name: "Quarterly access review policy.pdf",
-  content: "Access reviews are performed quarterly.",
-};
+const evidence = createFlowEvidence();
 
 const result: EvaluationResult = {
   flowId,

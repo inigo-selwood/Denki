@@ -23,7 +23,7 @@ describe("loadConfiguration", () => {
     delete process.env.ENVIRONMENT;
 
     expect(() => loadConfiguration()).toThrow(
-      "Missing production configuration: production database connection routing, INNGEST_EVENT_KEY, INNGEST_SIGNING_KEY",
+      "Missing production configuration: production database connection routing, INNGEST_EVENT_KEY, INNGEST_SIGNING_KEY, REDUCTO_API_KEY",
     );
   });
 
@@ -48,6 +48,23 @@ describe("loadConfiguration", () => {
       eventKey: "event-key",
       signingKey: "signing-key",
     });
+  });
+
+  it("reads Reducto configuration from the environment", () => {
+    process.env.ENVIRONMENT = "development";
+    process.env.REDUCTO_API_KEY = "reducto-key";
+    process.env.REDUCTO_ENVIRONMENT = "eu";
+
+    expect(loadConfiguration().reducto).toEqual({
+      apiKey: "reducto-key",
+      environment: "eu",
+    });
+  });
+
+  it("defaults Reducto environment to production", () => {
+    process.env.ENVIRONMENT = "development";
+
+    expect(loadConfiguration().reducto.environment).toBe("production");
   });
 
   it("defaults the database host for development environment", () => {
@@ -81,7 +98,16 @@ describe("loadConfiguration", () => {
     process.env.ENVIRONMENT = "production";
 
     expect(() => loadConfiguration()).toThrow(
-      "Missing production configuration: production database connection routing, INNGEST_EVENT_KEY, INNGEST_SIGNING_KEY",
+      "Missing production configuration: production database connection routing, INNGEST_EVENT_KEY, INNGEST_SIGNING_KEY, REDUCTO_API_KEY",
+    );
+  });
+
+  it("rejects unknown Reducto environments", () => {
+    process.env.ENVIRONMENT = "development";
+    process.env.REDUCTO_ENVIRONMENT = "moon";
+
+    expect(() => loadConfiguration()).toThrow(
+      "Invalid REDUCTO_ENVIRONMENT value: moon",
     );
   });
 

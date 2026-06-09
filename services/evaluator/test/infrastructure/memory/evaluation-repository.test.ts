@@ -1,17 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { createMemoryFlowRepository } from "../../../source/infrastructure/memory/evaluation-repository.js";
+import { createFlowEvidence } from "../../fixtures/evidence.js";
 
 const condition = {
   statement: "Access reviews are performed quarterly.",
   criteria: ["Evidence shows a quarterly access review."],
 };
 
-const evidence = {
-  evidenceId: "evidence-1",
-  name: "Quarterly access review policy.pdf",
-  content: "Access reviews are performed quarterly.",
-};
+const evidence = createFlowEvidence();
 
 describe("memory flow repository", () => {
   it("stores and returns draft flows", async () => {

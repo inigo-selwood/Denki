@@ -1,0 +1,53 @@
+version: "3"
+
+env:
+  ENVIRONMENT: "development"
+  INGESTOR_PORT: "8000"
+
+tasks:
+  setup:
+    desc: Install ingestor service dependencies
+    cmds:
+      - python3 -m pip install --editable ".[dev]"
+
+  lint:
+    desc: Run ingestor service lint checks
+    cmds:
+      - python3 -m ruff format --check .
+      - python3 -m ruff check .
+
+  run-local:
+    desc: Run the ingestor FastAPI service locally with Uvicorn
+    cmds:
+      - >-
+        uvicorn source.app:create_app
+        --factory
+        --host 0.0.0.0
+        --port $INGESTOR_PORT
+
+  run-docker:
+    desc: Build and run the ingestor FastAPI Docker container
+    deps:
+      - build
+    cmds:
+      - >-
+        docker run --rm
+        --env ENVIRONMENT=local
+        --env INGESTOR_PORT=$INGESTOR_PORT
+        --publish $INGESTOR_PORT:$INGESTOR_PORT
+        denki/ingestor:latest
+
+  build:
+    desc: Build the ingestor service Docker image
+    cmds:
+      - docker build --tag denki/ingestor:latest .
+
+  test:
+    desc: Run the ingestor service test suite
+    cmds:
+      - python3 -m pytest
+
+  clean:
+    desc: Remove generated ingestor service artifacts
+    cmds:
+      - rm -rf .pytest_cache .ruff_cache build dist

@@ -2,6 +2,8 @@
 
 # Dependencies
 node_modules/
+.venv/
+venv/
 
 # Build outputs
 build/
@@ -15,8 +17,12 @@ npm-debug.log*
 
 # Test and tool caches
 .cache/
+.pytest_cache/
+.ruff_cache/
 .vitest/
 .eslintcache
+__pycache__/
+*.py[cod]
 **/supabase/.branches/
 **/supabase/.temp/
 

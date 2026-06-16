@@ -5,3 +5,10 @@ services:
     image: denki/evaluator:latest
     ports:
       - "3000:3000"
+
+  ingestor:
+    build:
+      context: ./services/ingestor
+    image: denki/ingestor:latest
+    ports:
+      - "8000:8000"

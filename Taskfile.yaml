@@ -4,6 +4,7 @@ env:
   ENVIRONMENT: "development"
 
   EVALUATOR_PORT: "3000"
+  INGESTOR_PORT: "8000"
 
   DATABASE_PORT: "54322"
   DATABASE_USER: "postgres"
@@ -18,19 +19,26 @@ includes:
     taskfile: ./services/evaluator/Taskfile.yaml
     dir: ./services/evaluator
 
+  ingestor:
+    taskfile: ./services/ingestor/Taskfile.yaml
+    dir: ./services/ingestor
+
 tasks:
   clean:
     desc: Clean root-managed local artifacts
     cmds:
       - task database:clean
       - task evaluator:clean
+      - task ingestor:clean
 
   lint:
     desc: Run lint checks across services
     cmds:
       - task evaluator:lint
+      - task ingestor:lint
 
   test:
     desc: Run tests across services
     cmds:
       - task evaluator:test
+      - task ingestor:test

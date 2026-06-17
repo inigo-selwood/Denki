@@ -86,6 +86,8 @@ At minimum, a service's taskfile will contain:
   tool will execute that script.
 - `deploy`: _(future)_ deploy will push a service's container to the relevant
   cloud provider.
+- `setup`: prepares local dependencies and generated development state needed
+  by other tasks.
 - `lint` and `format`: each service must provide a point of contact for some
   form of linting/formatting - both for use during development and by GitHub
   workflow action while approving pull requests.

@@ -1,8 +1,19 @@
 version: "3"
 
 tasks:
+  setup:
+    internal: true
+    silent: true
+    run: once
+    cmds:
+      - npm ci
+    status:
+      - test node_modules/.package-lock.json -nt package-lock.json
+
   test:
     desc: Run an ephemeral blank local Supabase database lifecycle
+    deps:
+      - setup
     cmds:
       - task: start
       - defer: { task: stop }
@@ -10,11 +21,15 @@ tasks:
 
   start:
     desc: Start the database service local Supabase database
+    deps:
+      - setup
     cmds:
       - npm exec supabase -- db start
 
   reset:
     desc: Reset the database service local Supabase database
+    deps:
+      - setup
     cmds:
       - task: start
       - npm exec supabase -- db reset
@@ -26,5 +41,7 @@ tasks:
 
   stop:
     desc: Stop the database service local Supabase stack without keeping data
+    deps:
+      - setup
     cmds:
       - npm exec supabase -- stop --no-backup

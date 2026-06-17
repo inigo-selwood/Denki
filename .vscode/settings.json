@@ -12,5 +12,12 @@
   "editor.formatOnSave": true,
   "explorer.decorations.badges": true,
   "explorer.decorations.colors": true,
+  "files.exclude": {
+    "**/.pytest_cache": true,
+    "**/.ruff_cache": true,
+    "**/.venv": true,
+    "**/*.egg-info": true,
+    "**/__pycache__": true
+  },
   "prettier.configPath": "configuration/.prettierrc"
 }

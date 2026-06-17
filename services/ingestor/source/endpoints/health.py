@@ -1,8 +1,20 @@
 from fastapi import APIRouter
+from pydantic import BaseModel
 
 router = APIRouter()
 
 
-@router.get("/health")
-async def health() -> dict[str, str]:
-    return {"status": "ok"}
+class HealthResponse(BaseModel):
+    status: str
+
+
+@router.get("/health", response_model=HealthResponse)
+async def health() -> HealthResponse:
+    """Delegate the health endpoint to its controller.
+
+    Returns
+    -------
+    HealthResponse
+        Static health payload.
+    """
+    return HealthResponse(status="ok")

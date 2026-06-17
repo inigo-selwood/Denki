@@ -1,10 +1,11 @@
 from fastapi.testclient import TestClient
 
-from source.app import create_app
+from source.main import run
 
 
 def test_health_returns_ok() -> None:
-    app = create_app()
+    """Verify the health endpoint returns the exact status payload."""
+    app = run()
     client = TestClient(app)
 
     response = client.get("/health")

@@ -9,12 +9,16 @@ description = "Evidence ingestion and structure extraction service"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115.0",
+    "paddleocr[all]>=3.7.0",
+    "paddlepaddle>=3.0.0",
     "pillow>=11.0.0",
     "pydantic>=2.10.0",
-    "pytesseract>=0.3.13",
     "python-multipart>=0.0.20",
     "uvicorn[standard]>=0.34.0",
 ]
+
+[project.scripts]
+denki-ingestor = "source.cli:main"
 
 [project.optional-dependencies]
 dev = [
@@ -29,6 +33,9 @@ include = ["source*"]
 
 [tool.pytest.ini_options]
 testpaths = ["test"]
+markers = [
+    "integration: tests that exercise external runtime dependencies and real fixtures",
+]
 
 [tool.black]
 line-length = 79

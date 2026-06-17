@@ -40,7 +40,10 @@ jobs:
       - name: Install ingestor system dependencies
         run: >-
           sudo apt-get update
-          && sudo apt-get install --yes tesseract-ocr
+          && sudo apt-get install --yes
+          libgl1
+          libglib2.0-0
+          libgomp1
 
       - name: Install evaluator dependencies
         working-directory: services/evaluator

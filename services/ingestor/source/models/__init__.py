@@ -31,6 +31,9 @@ from source.models.geometry import BoundingBox as BoundingBox
 from source.models.html import HTMLDocument as HTMLDocument
 from source.models.html import HTMLElement as HTMLElement
 from source.models.html import HTMLTag as HTMLTag
+from source.models.ocr import OCRBlock as OCRBlock
+from source.models.ocr import OCRDocument as OCRDocument
+from source.models.ocr import OCREngine as OCREngine
 from source.models.text import Paragraph as Paragraph
 from source.models.text import Sentence as Sentence
 from source.models.text import TextRole as TextRole

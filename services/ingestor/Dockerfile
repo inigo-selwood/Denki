@@ -12,9 +12,10 @@ RUN apt-get update \
         libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY . .
+COPY setup ./setup
+COPY source ./source
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir --editable .
+    && pip install --no-cache-dir --editable ./setup
 
 CMD python -m source.main serve \
     --host 0.0.0.0 \

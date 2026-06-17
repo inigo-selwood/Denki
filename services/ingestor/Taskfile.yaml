@@ -46,7 +46,7 @@ tasks:
     deps:
       - setup
     cmds:
-      - .venv/bin/python -m pytest test/unit
+      - .venv/bin/python -m pytest -c setup/pyproject.toml test/unit
 
   test:integration:
     desc: Run the ingestor service integration test suite
@@ -55,7 +55,7 @@ tasks:
     cmds:
       - >-
         RUN_INGESTOR_INTEGRATION=1
-        .venv/bin/python -m pytest test/integration
+        .venv/bin/python -m pytest -c setup/pyproject.toml test/integration
 
   setup:
     internal: true
@@ -65,25 +65,25 @@ tasks:
       - python3 -m venv .venv
       - >-
         .venv/bin/python -m pip install
-        --editable ".[dev]"
+        --editable "./setup[dev]"
       - touch .venv/.setup.stamp
     status:
-      - test .venv/.setup.stamp -nt pyproject.toml
+      - test .venv/.setup.stamp -nt setup/pyproject.toml
 
   lint:
     desc: Run ingestor service lint checks
     deps:
       - setup
     cmds:
-      - .venv/bin/python -m black --check .
-      - .venv/bin/python -m ruff check .
+      - .venv/bin/python -m black --config setup/pyproject.toml --check .
+      - .venv/bin/python -m ruff check --config setup/pyproject.toml .
 
   format:
     internal: true
     deps:
       - setup
     cmds:
-      - .venv/bin/python -m black .
+      - .venv/bin/python -m black --config setup/pyproject.toml .
 
   build:
     internal: true

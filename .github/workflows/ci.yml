@@ -25,14 +25,14 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: services/evaluator/package-lock.json
+          cache-dependency-path: services/evaluator/setup/package-lock.json
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: services/ingestor/pyproject.toml
+          cache-dependency-path: services/ingestor/setup/pyproject.toml
 
       - name: Set up Task
         uses: arduino/setup-task@v2
@@ -47,7 +47,10 @@ jobs:
 
       - name: Install evaluator dependencies
         working-directory: services/evaluator
-        run: npm ci
+        run: >-
+          npm --prefix setup ci
+          && rm -rf node_modules
+          && ln -sfn setup/node_modules node_modules
 
       - name: Install ingestor dependencies
         run: task ingestor:setup

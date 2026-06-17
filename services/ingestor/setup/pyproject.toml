@@ -29,10 +29,11 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
+where = [".."]
 include = ["source*"]
 
 [tool.pytest.ini_options]
-testpaths = ["test"]
+testpaths = ["../test"]
 markers = [
     "integration: tests that exercise external runtime dependencies and real fixtures",
 ]

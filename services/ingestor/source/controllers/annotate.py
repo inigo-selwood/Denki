@@ -1,31 +1,29 @@
 from typing import Annotated
 
-from fastapi import File, HTTPException, UploadFile
+from fastapi import File, Form, HTTPException, UploadFile
 from fastapi.responses import Response
 
 from source import services
-
-SUPPORTED_IMAGE_TYPES = {
-    "image/jpeg",
-    "image/png",
-    "image/tiff",
-}
+from source.controllers.parse import SUPPORTED_IMAGE_TYPES
 
 
-async def parse(
+async def annotate(
     file: Annotated[UploadFile, File()],
+    markup: Annotated[str, Form()],
 ) -> Response:
-    """Validate and parse an uploaded image.
+    """Validate and annotate an uploaded image from markup.
 
     Parameters
     ----------
     file
-        Uploaded image file from the multipart request.
+        Uploaded source image.
+    markup
+        Ingestor HTML containing ``bounds`` attributes.
 
     Returns
     -------
     Response
-        HTML parse response.
+        PNG annotation response.
 
     Raises
     ------
@@ -40,9 +38,9 @@ async def parse(
             detail=f"Unsupported media type: {mime_type}",
         )
 
-    html = services.parse(
+    image = services.annotate(
         content=await file.read(),
-        mime_type=mime_type,
+        markup=markup,
     )
 
-    return Response(content=html, media_type="text/html")
+    return Response(content=image, media_type="image/png")

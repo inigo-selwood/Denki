@@ -5,13 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "denki-ingestor"
 version = "0.1.0"
-description = "Evidence ingestion and structure extraction service for Denki"
+description = "Evidence ingestion and structure extraction service"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115.0",
     "pillow>=11.0.0",
     "pydantic>=2.10.0",
-    "pydantic-settings>=2.7.0",
     "pytesseract>=0.3.13",
     "python-multipart>=0.0.20",
     "uvicorn[standard]>=0.34.0",
@@ -19,6 +18,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "black>=25.0.0",
     "httpx>=0.28.0",
     "pytest>=8.3.0",
     "ruff>=0.8.0",
@@ -29,6 +29,10 @@ include = ["source*"]
 
 [tool.pytest.ini_options]
 testpaths = ["test"]
+
+[tool.black]
+line-length = 79
+target-version = ["py312"]
 
 [tool.ruff]
 line-length = 79

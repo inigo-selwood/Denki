@@ -23,6 +23,7 @@ npm-debug.log*
 .eslintcache
 __pycache__/
 *.py[cod]
+*.egg-info/
 **/supabase/.branches/
 **/supabase/.temp/
 

@@ -8,19 +8,27 @@ tasks:
   setup:
     desc: Install ingestor service dependencies
     cmds:
-      - python3 -m pip install --editable ".[dev]"
+      - python3 -m venv .venv
+      - >-
+        .venv/bin/python -m pip install
+        --editable ".[dev]"
 
   lint:
     desc: Run ingestor service lint checks
     cmds:
-      - python3 -m ruff format --check .
-      - python3 -m ruff check .
+      - .venv/bin/python -m black --check .
+      - .venv/bin/python -m ruff check .
+
+  format:
+    desc: Format ingestor service source files
+    cmds:
+      - .venv/bin/python -m black .
 
   run-local:
     desc: Run the ingestor FastAPI service locally with Uvicorn
     cmds:
       - >-
-        uvicorn source.app:create_app
+        .venv/bin/python -m uvicorn source.main:run
         --factory
         --host 0.0.0.0
         --port $INGESTOR_PORT
@@ -39,13 +47,15 @@ tasks:
 
   build:
     desc: Build the ingestor service Docker image
+    deps:
+      - format
     cmds:
       - docker build --tag denki/ingestor:latest .
 
   test:
     desc: Run the ingestor service test suite
     cmds:
-      - python3 -m pytest
+      - .venv/bin/python -m pytest
 
   clean:
     desc: Remove generated ingestor service artifacts

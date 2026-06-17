@@ -3,33 +3,23 @@ version: "3"
 env:
   ENVIRONMENT: "development"
   INGESTOR_PORT: "8000"
+  PADDLE_PDX_CACHE_HOME: ".cache/paddlex"
 
 tasks:
-  setup:
-    desc: Install ingestor service dependencies
+  run-cli:
+    desc: Run the ingestor CLI with forwarded arguments
+    deps:
+      - setup
     cmds:
-      - python3 -m venv .venv
-      - >-
-        .venv/bin/python -m pip install
-        --editable ".[dev]"
-
-  lint:
-    desc: Run ingestor service lint checks
-    cmds:
-      - .venv/bin/python -m black --check .
-      - .venv/bin/python -m ruff check .
-
-  format:
-    desc: Format ingestor service source files
-    cmds:
-      - .venv/bin/python -m black .
+      - .venv/bin/python -m source.main {{.CLI_ARGS}}
 
   run-local:
     desc: Run the ingestor FastAPI service locally with Uvicorn
+    deps:
+      - setup
     cmds:
       - >-
-        .venv/bin/python -m uvicorn source.main:run
-        --factory
+        .venv/bin/python -m source.main serve
         --host 0.0.0.0
         --port $INGESTOR_PORT
 
@@ -45,19 +35,64 @@ tasks:
         --publish $INGESTOR_PORT:$INGESTOR_PORT
         denki/ingestor:latest
 
+  test:
+    desc: Run the ingestor service test suite
+    cmds:
+      - task test:unit
+      - task test:integration
+
+  test:unit:
+    desc: Run the ingestor service unit test suite
+    deps:
+      - setup
+    cmds:
+      - .venv/bin/python -m pytest test/unit
+
+  test:integration:
+    desc: Run the ingestor service integration test suite
+    deps:
+      - setup
+    cmds:
+      - >-
+        RUN_INGESTOR_INTEGRATION=1
+        .venv/bin/python -m pytest test/integration
+
+  setup:
+    internal: true
+    silent: true
+    run: once
+    cmds:
+      - python3 -m venv .venv
+      - >-
+        .venv/bin/python -m pip install
+        --editable ".[dev]"
+      - touch .venv/.setup.stamp
+    status:
+      - test .venv/.setup.stamp -nt pyproject.toml
+
+  lint:
+    desc: Run ingestor service lint checks
+    deps:
+      - setup
+    cmds:
+      - .venv/bin/python -m black --check .
+      - .venv/bin/python -m ruff check .
+
+  format:
+    internal: true
+    deps:
+      - setup
+    cmds:
+      - .venv/bin/python -m black .
+
   build:
-    desc: Build the ingestor service Docker image
+    internal: true
     deps:
       - format
     cmds:
       - docker build --tag denki/ingestor:latest .
 
-  test:
-    desc: Run the ingestor service test suite
-    cmds:
-      - .venv/bin/python -m pytest
-
   clean:
     desc: Remove generated ingestor service artifacts
     cmds:
-      - rm -rf .pytest_cache .ruff_cache build dist
+      - rm -rf .cache .pytest_cache .ruff_cache build dist

@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from source.cli import main as cli_main
 from source.endpoints import routes
 
 
@@ -19,4 +20,4 @@ def run() -> FastAPI:
 
 
 if __name__ == "__main__":
-    run()
+    raise SystemExit(cli_main())

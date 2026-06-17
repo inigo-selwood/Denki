@@ -10,7 +10,7 @@ const databaseConnectionString =
 
 export default defineConfig({
   dialect: "postgresql",
-  schema: "./source/infrastructure/database/schema.ts",
+  schema: "../source/infrastructure/database/schema.ts",
   dbCredentials: {
     url: databaseConnectionString,
   },

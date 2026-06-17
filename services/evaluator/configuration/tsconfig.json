@@ -1,15 +1,15 @@
 {
   "compilerOptions": {
     "target": "ES2023",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "rootDir": "source",
-    "outDir": "build",
+    "module": "ES2022",
+    "moduleResolution": "Bundler",
+    "rootDir": "../source",
+    "outDir": "../build",
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["source/**/*.ts"]
+  "include": ["../source/**/*.ts"]
 }

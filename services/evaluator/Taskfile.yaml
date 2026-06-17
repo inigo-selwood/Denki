@@ -6,29 +6,45 @@ includes:
     dir: ../../database
 
 tasks:
+  setup:
+    internal: true
+    silent: true
+    run: once
+    cmds:
+      - npm --prefix setup ci
+      - rm -rf node_modules
+      - ln -sfn setup/node_modules node_modules
+    status:
+      - test setup/node_modules/.package-lock.json -nt setup/package-lock.json
+      - test -L node_modules
+
   lint:
     desc: Run evaluator service lint checks
+    deps:
+      - setup
     cmds:
-      - npm run format:check
-      - npm run typecheck
+      - npm --prefix setup run format:check
+      - npm --prefix setup run typecheck
 
   run-local:
     desc: Run the evaluator service locally
     dotenv:
-      - .env
+      - configuration/.env
+    deps:
+      - setup
     cmds:
-      - npm run dev
+      - npm --prefix setup run dev
 
   run-docker:
     desc: Build and run the evaluator Docker container with local env
     dotenv:
-      - .env
+      - configuration/.env
     deps:
       - build
     cmds:
       - >-
         docker run --rm
-        --env-file .env
+        --env-file configuration/.env
         --env ENVIRONMENT=local
         --env EVALUATOR_PORT=$EVALUATOR_PORT
         --env DATABASE_PORT=$DATABASE_PORT
@@ -45,14 +61,16 @@ tasks:
   test:
     desc: Run the evaluator service test suite with database schema checks
     dotenv:
-      - .env
+      - configuration/.env
+    deps:
+      - setup
     cmds:
       - task database:reset
       - defer: { task: database:stop }
-      - npm run db:push
-      - npm test
+      - npm --prefix setup run db:push
+      - npm --prefix setup test
 
   clean:
     desc: Remove generated evaluator service artifacts
     cmds:
-      - rm -rf build
+      - rm -rf build node_modules setup/node_modules

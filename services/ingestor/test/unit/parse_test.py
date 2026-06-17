@@ -1,12 +1,18 @@
 from fastapi.testclient import TestClient
 
+from source import services
 from source.main import run
 
 
-def test_parse_returns_html() -> None:
+def test_parse_returns_html(monkeypatch) -> None:
     """Verify the parse endpoint returns HTML."""
     app = run()
     client = TestClient(app)
+    monkeypatch.setattr(
+        services,
+        "parse",
+        lambda content, mime_type: "<html><body></body></html>\n",
+    )
 
     response = client.post(
         "/parse",

@@ -6,6 +6,22 @@ env:
   PADDLE_PDX_CACHE_HOME: ".cache/paddlex"
 
 tasks:
+  docs:
+    desc: Run the ingestor service and open the API docs
+    deps:
+      - setup
+    cmds:
+      - >-
+        .venv/bin/python -m source.main serve
+        --host 127.0.0.1
+        --port $INGESTOR_PORT &
+        server_pid=$!;
+        trap "kill $server_pid" EXIT;
+        sleep 2;
+        .venv/bin/python -m webbrowser
+        http://127.0.0.1:$INGESTOR_PORT/docs;
+        wait $server_pid
+
   run-cli:
     desc: Run the ingestor CLI with forwarded arguments
     deps:

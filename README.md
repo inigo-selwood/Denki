@@ -28,9 +28,10 @@ DBMSs in the future.
 
 Some folders you may see repeatedly include:
 
-- `setup`: contains dependency and install/build contract files, such as
-  `package.json`, `package-lock.json`, `pyproject.toml`, `requirements.txt`,
-  and equivalent language package manifests.
+- `setup`: contains dependency and install/build contract files when tooling
+  supports non-root manifests, such as `package.json`, `package-lock.json`,
+  `pyproject.toml`, `requirements.txt`, and equivalent language package
+  manifests.
 - `configuration`: contains development and tool configuration, such as
   formatter preferences, `.env.example`, `tsconfig.json`, linter config, and
   the like. Things useful during development but not intended as source, test
@@ -47,6 +48,7 @@ In addition to these folders, at the root of a service you might expect to see:
 - `Dockerfile`: Docker configuration
 - `.dockerignore`: Docker build context exclusions
 - `.gitignore`: local Git exclusions
+- package manifests: dependency setup files when required by local tooling
 - `Taskfile.yaml`: service-specific tasks
 
 ### 12FA
@@ -98,4 +100,16 @@ At minimum, a service's taskfile will contain:
 The root taskfile is intended to be as minimal as possible. Its `test` task is
 the single entrypoint for running all service tests.
 
-## Workflow
+### Environment
+
+Global environment for development and testing is defined in the root Taskfile.
+
+Env. wires through service-specific taskfiles and is injected into Dockerfiles
+at runtime.
+
+In deployment, it's injected via secrets, and `ENVIRONMENT=production` is
+expected.
+
+Any service-specific env. requirements are defined in
+`{service}/configuration/.env.example`. The actual `.env` file should never be
+staged or committed **under any circumstances**.

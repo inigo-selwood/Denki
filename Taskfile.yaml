@@ -4,6 +4,7 @@ env:
   ENVIRONMENT: "development"
 
   EVALUATOR_PORT: "3000"
+
   INGESTOR_PORT: "8000"
 
   DATABASE_PORT: "54322"

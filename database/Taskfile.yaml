@@ -7,8 +7,12 @@ tasks:
     run: once
     cmds:
       - npm ci
+      - touch .setup.stamp
     status:
-      - test node_modules/.package-lock.json -nt package-lock.json
+      - test -d node_modules
+      - test -f node_modules/.package-lock.json
+      - test .setup.stamp -nt package.json
+      - test .setup.stamp -nt package-lock.json
 
   test:
     desc: Run an ephemeral blank local Supabase database lifecycle

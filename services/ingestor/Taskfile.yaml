@@ -68,6 +68,8 @@ tasks:
         --editable "./setup[dev]"
       - touch .venv/.setup.stamp
     status:
+      - test -x .venv/bin/python
+      - test -x .venv/bin/pip
       - test .venv/.setup.stamp -nt setup/pyproject.toml
 
   lint:

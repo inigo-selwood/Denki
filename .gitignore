@@ -17,6 +17,8 @@ npm-debug.log*
 
 # Test and tool caches
 .cache/
+.setup.stamp
+**/.setup.stamp
 .pytest_cache/
 .ruff_cache/
 .vitest/

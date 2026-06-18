@@ -16,11 +16,11 @@ There are several further services in development not currently available here.
 
 ## Structure
 
-The codebase is a organized as a monorepo of microservices, which live in
+The codebase is organized as a monorepo of microservices, which live in
 `/services`.
 
-There exists a folder `/tools` which holds scripts not designed for deployment,
-but rather anything that might be used in development.
+There may eventually be a `/tools` folder for scripts not designed for
+deployment, but rather anything that might be used in development.
 
 There is also a `/database` folder which at present holds Supabase
 configuration and migrations, but may be expanded to add support for other
@@ -86,6 +86,8 @@ At minimum, a service's taskfile will contain:
   added for integration spin-up.
 - `run`: running a service boots a new instance of its container; running a
   tool will execute that script.
+- `run-*`: optional run variants, such as `run-local`, `run-docker`, or
+  `run-cli`.
 - `deploy`: _(future)_ deploy will push a service's container to the relevant
   cloud provider.
 - `setup`: prepares local dependencies and generated development state needed
@@ -95,6 +97,7 @@ At minimum, a service's taskfile will contain:
   workflow action while approving pull requests.
 - `test`: runs that service's tests, including unit and integration tests where
   present.
+- `test:*`: optional test variants, such as `test:unit` or `test:integration`.
 - `clean`: cleans up ephemera.
 
 The root taskfile is intended to be as minimal as possible. Its `test` task is
@@ -102,10 +105,15 @@ the single entrypoint for running all service tests.
 
 ### Environment
 
-Global environment for development and testing is defined in the root Taskfile.
+Environment shared between services is defined in the root Taskfile. This
+includes `ENVIRONMENT`, service ports, and other values common to local
+development and testing.
 
-Env. wires through service-specific taskfiles and is injected into Dockerfiles
-at runtime.
+Service-specific taskfiles may define additional env. required only by that
+service, such as API keys, tool cache paths, or adapter settings.
+
+Env. wires through taskfiles and is injected into debug processes or Docker
+commands at runtime.
 
 In deployment, it's injected via secrets, and `ENVIRONMENT=production` is
 expected.

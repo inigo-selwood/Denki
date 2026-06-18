@@ -11,20 +11,21 @@ tasks:
     silent: true
     run: once
     cmds:
-      - npm --prefix setup ci
-      - rm -rf node_modules
-      - ln -sfn setup/node_modules node_modules
+      - npm ci
+      - touch .setup.stamp
     status:
-      - test setup/node_modules/.package-lock.json -nt setup/package-lock.json
-      - test -L node_modules
+      - test -d node_modules
+      - test -f node_modules/.package-lock.json
+      - test .setup.stamp -nt package.json
+      - test .setup.stamp -nt package-lock.json
 
   lint:
     desc: Run evaluator service lint checks
     deps:
       - setup
     cmds:
-      - npm --prefix setup run format:check
-      - npm --prefix setup run typecheck
+      - npm run format:check
+      - npm run typecheck
 
   run-local:
     desc: Run the evaluator service locally
@@ -33,7 +34,7 @@ tasks:
     deps:
       - setup
     cmds:
-      - npm --prefix setup run dev
+      - npm run dev
 
   run-docker:
     desc: Build and run the evaluator Docker container with local env
@@ -67,10 +68,10 @@ tasks:
     cmds:
       - task database:reset
       - defer: { task: database:stop }
-      - npm --prefix setup run db:push
-      - npm --prefix setup test
+      - npm run db:push
+      - npm test
 
   clean:
     desc: Remove generated evaluator service artifacts
     cmds:
-      - rm -rf build node_modules setup/node_modules
+      - rm -rf build node_modules .setup.stamp

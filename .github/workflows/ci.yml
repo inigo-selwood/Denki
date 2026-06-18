@@ -25,7 +25,7 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: services/evaluator/setup/package-lock.json
+          cache-dependency-path: services/evaluator/package-lock.json
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -47,10 +47,7 @@ jobs:
 
       - name: Install evaluator dependencies
         working-directory: services/evaluator
-        run: >-
-          npm --prefix setup ci
-          && rm -rf node_modules
-          && ln -sfn setup/node_modules node_modules
+        run: npm ci
 
       - name: Install ingestor dependencies
         run: task ingestor:setup

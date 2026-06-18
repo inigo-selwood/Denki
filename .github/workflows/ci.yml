@@ -10,6 +10,7 @@ on:
       - "configuration/**"
       - "services/evaluator/**"
       - "services/ingestor/**"
+      - "services/assessor/**"
 
 jobs:
   services:
@@ -32,7 +33,9 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: services/ingestor/setup/pyproject.toml
+          cache-dependency-path: |
+            services/ingestor/setup/pyproject.toml
+            services/assessor/setup/pyproject.toml
 
       - name: Set up Task
         uses: arduino/setup-task@v2
@@ -51,6 +54,9 @@ jobs:
 
       - name: Install ingestor dependencies
         run: task ingestor:setup
+
+      - name: Install assessor dependencies
+        run: task assessor:setup
 
       - name: Lint
         run: task lint

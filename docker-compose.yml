@@ -2,6 +2,8 @@ services:
   evaluator:
     build:
       context: ./services/evaluator
+    environment:
+      INGESTOR_URL: http://ingestor:8000
     image: denki/evaluator:latest
     ports:
       - "3000:3000"
@@ -12,3 +14,10 @@ services:
     image: denki/ingestor:latest
     ports:
       - "8000:8000"
+
+  assessor:
+    build:
+      context: ./services/assessor
+    image: denki/assessor:latest
+    ports:
+      - "9000:9000"

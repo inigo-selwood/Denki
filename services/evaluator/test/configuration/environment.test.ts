@@ -61,6 +61,15 @@ describe("loadConfiguration", () => {
     });
   });
 
+  it("reads ingestor configuration from the environment", () => {
+    process.env.ENVIRONMENT = "development";
+    process.env.INGESTOR_URL = "http://127.0.0.1:8000";
+
+    expect(loadConfiguration().ingestor).toEqual({
+      url: "http://127.0.0.1:8000",
+    });
+  });
+
   it("defaults Reducto environment to production", () => {
     process.env.ENVIRONMENT = "development";
 
@@ -99,6 +108,15 @@ describe("loadConfiguration", () => {
 
     expect(() => loadConfiguration()).toThrow(
       "Missing production configuration: production database connection routing, INNGEST_EVENT_KEY, INNGEST_SIGNING_KEY, REDUCTO_API_KEY",
+    );
+  });
+
+  it("does not require Reducto credentials in production when ingestor is configured", () => {
+    process.env.ENVIRONMENT = "production";
+    process.env.INGESTOR_URL = "http://ingestor:8000";
+
+    expect(() => loadConfiguration()).toThrow(
+      "Missing production configuration: production database connection routing, INNGEST_EVENT_KEY, INNGEST_SIGNING_KEY",
     );
   });
 

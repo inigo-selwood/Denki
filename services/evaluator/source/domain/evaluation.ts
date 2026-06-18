@@ -39,7 +39,7 @@ export const evidenceBlockSchema = z
 
 export const evidenceIngestionSchema = z
   .object({
-    provider: z.literal("reducto"),
+    provider: z.enum(["reducto", "ingestor"]),
     providerFileId: z.string().min(1).optional(),
     providerJobId: z.string().min(1).optional(),
     studioLink: z.string().url().optional(),

@@ -16,6 +16,7 @@ import {
   createCompositeEvaluationQueue,
   createImmediateEvaluationQueue,
 } from "../infrastructure/memory/evaluation-queue.js";
+import { createIngestorEvidenceIngestionProvider } from "../infrastructure/ingestor/evidence-ingestion.js";
 import { createReductoEvidenceIngestionProvider } from "../infrastructure/reducto/evidence-ingestion.js";
 
 import type { FlowRoutesDependencies } from "../inbound/http/routes/flows.js";
@@ -27,6 +28,9 @@ export type RuntimeEvaluationConfiguration = {
   };
   queue: {
     mode: "immediate" | "inngest";
+  };
+  ingestor: {
+    url: string | undefined;
   };
   reducto: {
     apiKey: string | undefined;
@@ -94,10 +98,16 @@ export function createRuntimeEvaluationDependencies(
 function createRuntimeIngestionProvider(
   configuration: RuntimeEvaluationConfiguration,
 ): DocumentIngestionProvider {
+  if (configuration.ingestor.url !== undefined) {
+    return createIngestorEvidenceIngestionProvider({
+      baseUrl: configuration.ingestor.url,
+    });
+  }
+
   if (configuration.reducto.apiKey === undefined) {
     return {
       async ingest() {
-        throw new FlowClientError("Reducto ingestion is not configured.");
+        throw new FlowClientError("Evidence ingestion is not configured.");
       },
     };
   }

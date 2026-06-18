@@ -17,6 +17,10 @@ type ReductoConfiguration = {
   environment: ReductoEnvironment;
 };
 
+type IngestorConfiguration = {
+  url: string | undefined;
+};
+
 type DatabaseConfiguration = {
   connectionUrl: string | undefined;
 };
@@ -30,6 +34,7 @@ type ServiceConfiguration = {
   http: HttpConfiguration;
   openai: OpenAIConfiguration;
   inngest: InngestConfiguration;
+  ingestor: IngestorConfiguration;
   reducto: ReductoConfiguration;
   database: DatabaseConfiguration;
   queue: {
@@ -54,6 +59,9 @@ export function loadConfiguration(): ServiceConfiguration {
     inngest: {
       eventKey: readOptionalEnvironmentVariable("INNGEST_EVENT_KEY"),
       signingKey: readOptionalEnvironmentVariable("INNGEST_SIGNING_KEY"),
+    },
+    ingestor: {
+      url: readOptionalEnvironmentVariable("INGESTOR_URL"),
     },
     reducto: {
       apiKey: readOptionalEnvironmentVariable("REDUCTO_API_KEY"),
@@ -177,7 +185,10 @@ function validateConfiguration(configuration: ServiceConfiguration): void {
     missing.push("INNGEST_SIGNING_KEY");
   }
 
-  if (configuration.reducto.apiKey === undefined) {
+  if (
+    configuration.ingestor.url === undefined &&
+    configuration.reducto.apiKey === undefined
+  ) {
     missing.push("REDUCTO_API_KEY");
   }
 

@@ -1,0 +1,36 @@
+name: denki-local
+
+services:
+  evaluator:
+    build:
+      context: ../../services/evaluator
+    environment:
+      ENVIRONMENT: local
+      EVALUATOR_PORT: ${EVALUATOR_PORT:-3000}
+      INGESTOR_URL: http://ingestor:8000
+      DATABASE_PORT: ${DATABASE_PORT:-54322}
+      DATABASE_USER: ${DATABASE_USER:-postgres}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+    image: denki/evaluator:latest
+    ports:
+      - "${EVALUATOR_PORT:-3000}:3000"
+
+  ingestor:
+    build:
+      context: ../../services/ingestor
+    environment:
+      ENVIRONMENT: local
+      INGESTOR_PORT: 8000
+    image: denki/ingestor:latest
+    ports:
+      - "${INGESTOR_PORT:-8000}:8000"
+
+  assessor:
+    build:
+      context: ../../services/assessor
+    environment:
+      ENVIRONMENT: local
+      ASSESSOR_PORT: 9000
+    image: denki/assessor:latest
+    ports:
+      - "${ASSESSOR_PORT:-9000}:9000"

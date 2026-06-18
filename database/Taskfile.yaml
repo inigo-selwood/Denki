@@ -41,7 +41,11 @@ tasks:
   clean:
     desc: Remove local Supabase containers and data
     cmds:
-      - task: stop
+      - >-
+        if [ -x node_modules/.bin/supabase ]; then
+        npm exec supabase -- stop --no-backup;
+        fi
+      - rm -rf node_modules .setup.stamp
 
   stop:
     desc: Stop the database service local Supabase stack without keeping data

@@ -1,10 +1,5 @@
 version: "3"
 
-includes:
-  database:
-    taskfile: ../../database/Taskfile.yaml
-    dir: ../../database
-
 tasks:
   setup:
     internal: true
@@ -66,12 +61,12 @@ tasks:
     deps:
       - setup
     cmds:
-      - task database:reset
-      - defer: { task: database:stop }
+      - task -d ../.. database:reset
+      - defer: task -d ../.. database:stop
       - npm run db:push
       - npm test
 
   clean:
     desc: Remove generated evaluator service artifacts
     cmds:
-      - rm -rf build node_modules .setup.stamp
+      - rm -rf build coverage .vitest node_modules .setup.stamp *.tsbuildinfo

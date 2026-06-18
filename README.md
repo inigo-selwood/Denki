@@ -71,34 +71,38 @@ philosophy which aspires to:
 The primary contact surface for developers is implemented using `go-task`
 
 The root `Taskfile.yaml` is merely a wrapper; services own their particular
-tasks.
+tasks. Root task options are intentionally small:
+
+| Task    | Purpose                                      |
+| ------- | -------------------------------------------- |
+| `run`   | Runs the local container stack.              |
+| `lint`  | Runs lint checks across services.            |
+| `test`  | Runs test suites across services.            |
+| `clean` | Removes root-managed generated artifacts.    |
+
+For more granular commands, navigate to the relevant service and run its
+taskfile directly.
 
 If a service's taskfile grows unwieldy, it may be divided into smaller files
-living under `{service_root}/configuration/task`
+living under `{service_root}/configuration/task`.
 
 At minimum, a service's taskfile will contain:
 
-- `debug`: a local run of the service with whatever debug tooling the
-  language/environment permits. For TS this might be `npm run dev`, in python
-  it could be `uvicorn source.main:app`, and so-on.
-- `build`: services are all Dockerised; build will create and tag a latest
-  revision of that service. _(future)_ a root `docker-compose.yaml` will be
-  added for integration spin-up.
-- `run`: running a service boots a new instance of its container; running a
-  tool will execute that script.
-- `run-*`: optional run variants, such as `run-local`, `run-docker`, or
-  `run-cli`.
-- `deploy`: _(future)_ deploy will push a service's container to the relevant
-  cloud provider.
-- `setup`: prepares local dependencies and generated development state needed
-  by other tasks.
-- `lint` and `format`: each service must provide a point of contact for some
-  form of linting/formatting - both for use during development and by GitHub
-  workflow action while approving pull requests.
-- `test`: runs that service's tests, including unit and integration tests where
-  present.
-- `test:*`: optional test variants, such as `test:unit` or `test:integration`.
-- `clean`: cleans up ephemera.
+| Task               | Purpose                                                                          |
+| ------------------ | -------------------------------------------------------------------------------- |
+| `setup`            | Prepares service dependencies and generated state; internal to dependent tasks.  |
+| `build`            | Creates and tags the service Docker image; internal to container run tasks.      |
+| `debug`            | Runs the service process directly on the host.                                   |
+| `run`              | Builds and runs the service container locally.                                   |
+| `docs`             | Runs the service and opens API documentation where available.                    |
+| `invoke`           | Runs a service command entrypoint with forwarded arguments where available.      |
+| `lint`             | Runs service lint and static checks.                                             |
+| `format`           | Formats service-owned files.                                                     |
+| `test`             | Runs the service test suite.                                                     |
+| `test:unit`        | Runs unit tests where the split is useful.                                       |
+| `test:integration` | Runs integration tests where the split is useful.                                |
+| `deploy`           | Pushes the service container to the relevant cloud provider. _(future)_          |
+| `clean`            | Removes generated local artifacts.                                               |
 
 The root taskfile is intended to be as minimal as possible. Its `test` task is
 the single entrypoint for running all service tests.

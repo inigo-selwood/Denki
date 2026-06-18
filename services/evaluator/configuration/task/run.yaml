@@ -1,0 +1,26 @@
+version: "3"
+
+tasks:
+  debug:
+    desc: Run the evaluator service on the host
+    dotenv:
+      - configuration/.env
+    deps:
+      - setup
+    cmds:
+      - npm run dev
+
+  run:
+    desc: Build and run the evaluator container locally
+    dotenv:
+      - configuration/.env
+    deps:
+      - build
+    cmds:
+      - >-
+        docker run --rm --env-file configuration/.env --env ENVIRONMENT=local
+        --env EVALUATOR_PORT=$EVALUATOR_PORT --env
+        INGESTOR_URL=http://host.docker.internal:$INGESTOR_PORT --env
+        DATABASE_PORT=$DATABASE_PORT --env DATABASE_USER=$DATABASE_USER --env
+        DATABASE_PASSWORD=$DATABASE_PASSWORD --publish
+        $EVALUATOR_PORT:$EVALUATOR_PORT denki/evaluator:latest

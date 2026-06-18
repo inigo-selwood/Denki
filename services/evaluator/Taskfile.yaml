@@ -1,73 +1,18 @@
 version: "3"
 
-tasks:
-  setup:
-    internal: true
-    silent: true
-    run: once
-    cmds:
-      - npm ci
-      - touch .setup.stamp
-    status:
-      - test -d node_modules
-      - test -f node_modules/.package-lock.json
-      - test .setup.stamp -nt package.json
-      - test .setup.stamp -nt package-lock.json
-
-  lint:
-    desc: Run evaluator service lint checks
-    deps:
-      - setup
-    cmds:
-      - npm run format:check
-      - npm run typecheck
-
-  run-local:
-    desc: Run the evaluator service locally
-    dotenv:
-      - configuration/.env
-    deps:
-      - setup
-    cmds:
-      - npm run dev
-
-  run-docker:
-    desc: Build and run the evaluator Docker container with local env
-    dotenv:
-      - configuration/.env
-    deps:
-      - build
-    cmds:
-      - >-
-        docker run --rm
-        --env-file configuration/.env
-        --env ENVIRONMENT=local
-        --env EVALUATOR_PORT=$EVALUATOR_PORT
-        --env INGESTOR_URL=http://host.docker.internal:$INGESTOR_PORT
-        --env DATABASE_PORT=$DATABASE_PORT
-        --env DATABASE_USER=$DATABASE_USER
-        --env DATABASE_PASSWORD=$DATABASE_PASSWORD
-        --publish $EVALUATOR_PORT:$EVALUATOR_PORT
-        denki/evaluator:latest
-
-  build:
-    desc: Build the evaluator service Docker image
-    cmds:
-      - docker build --tag denki/evaluator:latest .
+includes:
+  run:
+    taskfile: ./configuration/task/run.yaml
+    flatten: true
 
   test:
-    desc: Run the evaluator service test suite with database schema checks
-    dotenv:
-      - configuration/.env
-    deps:
-      - setup
-    cmds:
-      - task -d ../.. database:reset
-      - defer: task -d ../.. database:stop
-      - npm run db:push
-      - npm test
+    taskfile: ./configuration/task/test.yaml
+    flatten: true
 
-  clean:
-    desc: Remove generated evaluator service artifacts
-    cmds:
-      - rm -rf build coverage .vitest node_modules .setup.stamp *.tsbuildinfo
+  quality:
+    taskfile: ./configuration/task/quality.yaml
+    flatten: true
+
+  lifecycle:
+    taskfile: ./configuration/task/lifecycle.yaml
+    flatten: true

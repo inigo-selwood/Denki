@@ -1,0 +1,25 @@
+version: "3"
+
+tasks:
+  setup:
+    internal: true
+    silent: true
+    run: once
+    cmds:
+      - npm ci
+      - touch .setup.stamp
+    status:
+      - test -d node_modules
+      - test -f node_modules/.package-lock.json
+      - test .setup.stamp -nt package.json
+      - test .setup.stamp -nt package-lock.json
+
+  build:
+    internal: true
+    cmds:
+      - docker build --tag denki/evaluator:latest .
+
+  clean:
+    desc: Remove generated evaluator service artifacts
+    cmds:
+      - rm -rf build coverage .vitest node_modules .setup.stamp *.tsbuildinfo

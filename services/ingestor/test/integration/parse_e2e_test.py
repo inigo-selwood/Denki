@@ -20,7 +20,7 @@ def test_parse_extracts_html_from_doclaynet_financial_report() -> None:
     """Verify the real parse endpoint handles a fixture document image."""
     assert IMAGE_PATHS, "expected at least one fixture image"
     if find_spec("paddleocr") is None:
-        pytest.fail("paddleocr is not installed; run task ingestor:setup")
+        pytest.fail("paddleocr is not installed; run the ingestor test task")
 
     app = run()
     client = TestClient(app)

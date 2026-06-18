@@ -1,0 +1,17 @@
+version: "3"
+
+tasks:
+  lint:
+    desc: Run ingestor service lint checks
+    deps:
+      - setup
+    cmds:
+      - .venv/bin/python -m black --config setup/pyproject.toml --check .
+      - .venv/bin/python -m ruff check --config setup/pyproject.toml .
+
+  format:
+    internal: true
+    deps:
+      - setup
+    cmds:
+      - .venv/bin/python -m black --config setup/pyproject.toml .

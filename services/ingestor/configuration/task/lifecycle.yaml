@@ -1,0 +1,39 @@
+version: "3"
+
+tasks:
+  setup:
+    internal: true
+    silent: true
+    run: once
+    cmds:
+      - python3 -m venv .venv
+      - >-
+        .venv/bin/python -m pip install
+        --editable "./setup[dev]"
+      - touch .venv/.setup.stamp
+    status:
+      - test -x .venv/bin/python
+      - test -x .venv/bin/pip
+      - test .venv/.setup.stamp -nt setup/pyproject.toml
+
+  build:
+    internal: true
+    deps:
+      - format
+    cmds:
+      - docker build --tag denki/ingestor:latest .
+
+  clean:
+    desc: Remove generated ingestor service artifacts
+    cmds:
+      - >-
+        rm -rf
+        .cache
+        .pytest_cache
+        .ruff_cache
+        .venv
+        build
+        dist
+        denki_ingestor.egg-info
+        setup/.pytest_cache
+      - find . -type d -name __pycache__ -prune -exec rm -rf {} +

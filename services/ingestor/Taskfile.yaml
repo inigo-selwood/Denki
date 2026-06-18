@@ -5,122 +5,19 @@ env:
   INGESTOR_PORT: "8000"
   PADDLE_PDX_CACHE_HOME: ".cache/paddlex"
 
-tasks:
-  docs:
-    desc: Run the ingestor service and open the API docs
-    deps:
-      - setup
-    cmds:
-      - >-
-        .venv/bin/python -m source.main serve
-        --host 127.0.0.1
-        --port $INGESTOR_PORT &
-        server_pid=$!;
-        trap "kill $server_pid" EXIT;
-        sleep 2;
-        .venv/bin/python -m webbrowser
-        http://127.0.0.1:$INGESTOR_PORT/docs;
-        wait $server_pid
-
-  run-cli:
-    desc: Run the ingestor CLI with forwarded arguments
-    deps:
-      - setup
-    cmds:
-      - .venv/bin/python -m source.main {{.CLI_ARGS}}
-
-  run-local:
-    desc: Run the ingestor FastAPI service locally with Uvicorn
-    deps:
-      - setup
-    cmds:
-      - >-
-        .venv/bin/python -m source.main serve
-        --host 0.0.0.0
-        --port $INGESTOR_PORT
-
-  run-docker:
-    desc: Build and run the ingestor FastAPI Docker container
-    deps:
-      - build
-    cmds:
-      - >-
-        docker run --rm
-        --env ENVIRONMENT=local
-        --env INGESTOR_PORT=$INGESTOR_PORT
-        --publish $INGESTOR_PORT:$INGESTOR_PORT
-        denki/ingestor:latest
+includes:
+  run:
+    taskfile: ./configuration/task/run.yaml
+    flatten: true
 
   test:
-    desc: Run the ingestor service test suite
-    cmds:
-      - task test:unit
-      - task test:integration
+    taskfile: ./configuration/task/test.yaml
+    flatten: true
 
-  test:unit:
-    desc: Run the ingestor service unit test suite
-    deps:
-      - setup
-    cmds:
-      - .venv/bin/python -m pytest -c setup/pyproject.toml test/unit
+  quality:
+    taskfile: ./configuration/task/quality.yaml
+    flatten: true
 
-  test:integration:
-    desc: Run the ingestor service integration test suite
-    deps:
-      - setup
-    cmds:
-      - >-
-        RUN_INGESTOR_INTEGRATION=1
-        .venv/bin/python -m pytest -c setup/pyproject.toml test/integration
-
-  setup:
-    internal: true
-    silent: true
-    run: once
-    cmds:
-      - python3 -m venv .venv
-      - >-
-        .venv/bin/python -m pip install
-        --editable "./setup[dev]"
-      - touch .venv/.setup.stamp
-    status:
-      - test -x .venv/bin/python
-      - test -x .venv/bin/pip
-      - test .venv/.setup.stamp -nt setup/pyproject.toml
-
-  lint:
-    desc: Run ingestor service lint checks
-    deps:
-      - setup
-    cmds:
-      - .venv/bin/python -m black --config setup/pyproject.toml --check .
-      - .venv/bin/python -m ruff check --config setup/pyproject.toml .
-
-  format:
-    internal: true
-    deps:
-      - setup
-    cmds:
-      - .venv/bin/python -m black --config setup/pyproject.toml .
-
-  build:
-    internal: true
-    deps:
-      - format
-    cmds:
-      - docker build --tag denki/ingestor:latest .
-
-  clean:
-    desc: Remove generated ingestor service artifacts
-    cmds:
-      - >-
-        rm -rf
-        .cache
-        .pytest_cache
-        .ruff_cache
-        .venv
-        build
-        dist
-        denki_ingestor.egg-info
-        setup/.pytest_cache
-      - find . -type d -name __pycache__ -prune -exec rm -rf {} +
+  lifecycle:
+    taskfile: ./configuration/task/lifecycle.yaml
+    flatten: true

@@ -1,0 +1,47 @@
+version: "3"
+
+tasks:
+  docs:
+    desc: Run the ingestor service and open the API docs
+    deps:
+      - setup
+    cmds:
+      - >-
+        .venv/bin/python -m source.main serve
+        --host 127.0.0.1
+        --port $INGESTOR_PORT &
+        server_pid=$!;
+        trap "kill $server_pid" EXIT;
+        sleep 2;
+        .venv/bin/python -m webbrowser
+        http://127.0.0.1:$INGESTOR_PORT/docs;
+        wait $server_pid
+
+  invoke:
+    desc: Run the ingestor command entrypoint with forwarded arguments
+    deps:
+      - setup
+    cmds:
+      - .venv/bin/python -m source.main {{.CLI_ARGS}}
+
+  debug:
+    desc: Run the ingestor FastAPI service on the host
+    deps:
+      - setup
+    cmds:
+      - >-
+        .venv/bin/python -m source.main serve
+        --host 0.0.0.0
+        --port $INGESTOR_PORT
+
+  run:
+    desc: Build and run the ingestor FastAPI container locally
+    deps:
+      - build
+    cmds:
+      - >-
+        docker run --rm
+        --env ENVIRONMENT=local
+        --env INGESTOR_PORT=$INGESTOR_PORT
+        --publish $INGESTOR_PORT:$INGESTOR_PORT
+        denki/ingestor:latest

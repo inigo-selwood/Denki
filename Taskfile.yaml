@@ -14,42 +14,45 @@ env:
   DATABASE_USER: "postgres"
   DATABASE_PASSWORD: "postgres"
 
-includes:
-  database:
-    taskfile: ./database/Taskfile.yaml
-    dir: ./database
-
-  evaluator:
-    taskfile: ./services/evaluator/Taskfile.yaml
-    dir: ./services/evaluator
-
-  ingestor:
-    taskfile: ./services/ingestor/Taskfile.yaml
-    dir: ./services/ingestor
-
-  assessor:
-    taskfile: ./services/assessor/Taskfile.yaml
-    dir: ./services/assessor
-
 tasks:
+  run:
+    desc: Run the local service stack
+    cmds:
+      - task -d database start
+      - >-
+        if docker compose version >/dev/null 2>&1; then
+          docker compose -f deployment/local/docker-compose.yml up --build;
+        elif command -v docker-compose >/dev/null 2>&1; then
+          docker-compose -f deployment/local/docker-compose.yml up --build;
+        else
+          echo "Docker Compose is required to run the local service stack.";
+          exit 1;
+        fi
+
   clean:
     desc: Clean root-managed local artifacts
     cmds:
-      - task database:clean
-      - task evaluator:clean
-      - task ingestor:clean
-      - task assessor:clean
+      - >-
+        if docker compose version >/dev/null 2>&1; then
+          docker compose -f deployment/local/docker-compose.yml down --remove-orphans;
+        elif command -v docker-compose >/dev/null 2>&1; then
+          docker-compose -f deployment/local/docker-compose.yml down --remove-orphans;
+        fi
+      - task -d database clean
+      - task -d services/evaluator clean
+      - task -d services/ingestor clean
+      - task -d services/assessor clean
 
   lint:
     desc: Run lint checks across services
     cmds:
-      - task evaluator:lint
-      - task ingestor:lint
-      - task assessor:lint
+      - task -d services/evaluator lint
+      - task -d services/ingestor lint
+      - task -d services/assessor lint
 
   test:
     desc: Run tests across services
     cmds:
-      - task evaluator:test
-      - task ingestor:test
-      - task assessor:test
+      - task -d services/evaluator test
+      - task -d services/ingestor test
+      - task -d services/assessor test

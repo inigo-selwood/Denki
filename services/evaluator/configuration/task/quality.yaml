@@ -1,0 +1,17 @@
+version: "3"
+
+tasks:
+  lint:
+    desc: Run evaluator service lint checks
+    deps:
+      - setup
+    cmds:
+      - npm run format:check
+      - npm run typecheck
+
+  format:
+    internal: true
+    deps:
+      - setup
+    cmds:
+      - npm run format

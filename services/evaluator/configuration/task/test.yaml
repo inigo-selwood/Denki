@@ -1,0 +1,14 @@
+version: "3"
+
+tasks:
+  test:
+    desc: Run the evaluator service test suite with database schema checks
+    dotenv:
+      - configuration/.env
+    deps:
+      - setup
+    cmds:
+      - task -d ../../database reset
+      - defer: task -d ../../database stop
+      - npm run db:push
+      - npm test

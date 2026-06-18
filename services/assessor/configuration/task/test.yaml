@@ -1,0 +1,22 @@
+version: "3"
+
+tasks:
+  test:
+    desc: Run the assessor service test suite
+    cmds:
+      - task test:unit
+      - task test:integration
+
+  test:unit:
+    desc: Run the assessor service unit test suite
+    deps:
+      - setup
+    cmds:
+      - .venv/bin/python -m pytest -c setup/pyproject.toml test/unit
+
+  test:integration:
+    desc: Run the assessor service integration test suite
+    deps:
+      - setup
+    cmds:
+      - .venv/bin/python -m pytest -c setup/pyproject.toml test/integration
